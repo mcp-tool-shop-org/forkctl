@@ -35,15 +35,15 @@ Tracked against [shipcheck](https://github.com/mcp-tool-shop-org/shipcheck) v1.0
 - [x] Dependency scanning enabled (CI runs npm audit indirectly via npm ci)
 - [x] Clean packaging (`files` field restricts publish to dist + docs)
 
-## Gate E — Polish (non-blocking but required for full treatment)
+## Gate E — Polish (full treatment)
 
-- [ ] Logo / wordmark
-- [ ] Translations (full-treatment)
-- [ ] Landing page entry on marketing site
-- [ ] Starlight handbook page connected to landing
-- [ ] GitHub repo metadata (description, topics, homepage)
+- [x] Logo / wordmark — `mcp-tool-shop-org/brand/logos/forkable/readme.png`, used in README header
+- [ ] Translations — pending user re-run of `polyglot-mcp/scripts/translate-all.mjs README.md` after logo header landed
+- [x] Landing page (Astro via `@mcptoolshop/site-theme`) — `https://mcp-tool-shop-org.github.io/forkable/`
+- [x] Starlight handbook (7 pages, emerald accent, pagefind search) — `.../handbook/`
+- [x] GitHub repo metadata — description, topics, homepage all set
+- [x] repo-knowledge DB entry — thesis, architecture, convention, command, next_step, warning + 2 relationships (depends_on shipcheck, related_to brand)
 
 ---
 
-All hard gates A–D pass at v1.0.0 initial commit.
-Gate E items are full-treatment polish, scheduled separately.
+All hard gates A–D pass. Phase E full-treatment polish complete except translations (one user-run command pending).

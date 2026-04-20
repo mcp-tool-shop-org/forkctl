@@ -12,7 +12,11 @@
   <a href="https://mcp-tool-shop-org.github.io/forkable/"><img src="https://img.shields.io/badge/Landing-Page-2563eb" alt="Landing Page"></a>
 </p>
 
-> Couche de contrôle de l'adoption pour les dépôts GitHub. Ce n'est pas un simple wrapper de fork, mais une couche complète qui évalue la préparation à l'adoption, choisit le bon mode de duplication, l'exécute comme une opération asynchrone suivie, rend le résultat exécutable et le maintient synchronisé au fil du temps.
+Plan de contrôle de l'adoption (du produit) pour les dépôts GitHub. Ce n'est pas un simple wrapper pour les forks, mais une couche complète qui évalue la préparation à l'adoption, choisit le bon chemin de duplication, l'exécute comme une opération asynchrone suivie, conserve le résultat exécutable, le maintient synchronisé au fil du temps, et – nouveauté dans la version 1.1.0 – le renomme de manière cohérente lorsque vous êtes prêt à l'intégrer à votre propre projet.
+
+## Nouveautés de la version 1.1.0
+
+Couche 7 – **Renommage multilingue conscient du contexte syntaxique (AST).** Le `forkable rename plan` génère un diff consultable qui couvre les fichiers d'identité, les symboles de code (26 langages via ast-grep) et les surfaces textuelles non liées au code. Le `forkable rename apply` prend une capture de l'arborescence, exécute toutes les étapes, régénère les fichiers de verrouillage et laisse un manifeste de régénération des ressources pour tout ce qui est binaire. Le `forkable rename rollback` restaure la dernière capture. Pas de chaînes `sed`. Correction des limites des mots. Sensible à la casse.
 
 ## Ce que fait forkable
 
@@ -28,6 +32,7 @@ Forkable gère tout ce "reste".
 | Synchronisation | Utilise l'API GitHub merge-upstream. Signale honnêtement les divergences. Recourt à une pull request si nécessaire. |
 | Gestion centralisée | Listez, vérifiez l'état et synchronisez par lots vos forks. |
 | Relevés | Enregistrement lisible par machine de chaque opération. Journal d'audit dans une base de données SQLite locale. |
+| Renommage | Renommage multilingue conscient du contexte syntaxique : fichiers d'identité, symboles de code, surfaces textuelles, régénération des fichiers de verrouillage. |
 
 ## Modes d'utilisation
 
@@ -96,6 +101,11 @@ Toutes les commandes acceptent l'option `--json` pour une sortie lisible par mac
 - `forkable_receipt` — enregistrement lisible par machine de toute opération
 - `forkable_audit_log` — historique append-only
 
+### Renommage (Couche 7 – nouveauté dans la version 1.1.0)
+- `forkable_rename_plan` – planificateur de renommage conscient du contexte syntaxique ; génère un diff consultable.
+- `forkable_rename_apply` – prend une capture et applique les modifications aux fichiers d'identité, aux symboles, aux surfaces textuelles et effectue les étapes de post-traitement.
+- `forkable_rename_rollback` – restaure à partir de la dernière capture.
+
 ## Profils de mise en place
 
 | Profil | Pour | Suivi |
@@ -126,7 +136,7 @@ Voir [SECURITY.md](SECURITY.md) pour le modèle de menace et la politique de sig
 
 ## Statut
 
-v1.0.0 — version initiale. Construit selon les critères de [shipcheck](https://github.com/mcp-tool-shop-org/shipcheck).
+Version 1.1.0 – ajoute la Couche 7 (Renommage). Construit selon les normes de [shipcheck](https://github.com/mcp-tool-shop-org/shipcheck).
 
 Voir [SHIP_GATE.md](SHIP_GATE.md) pour le tableau de bord de la validation.
 

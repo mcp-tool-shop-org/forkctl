@@ -12,7 +12,11 @@
   <a href="https://mcp-tool-shop-org.github.io/forkable/"><img src="https://img.shields.io/badge/Landing-Page-2563eb" alt="Landing Page"></a>
 </p>
 
-> Camada de controle de adoção para repositórios do GitHub. Não é apenas um "wrapper" para forks – é uma camada completa que avalia a prontidão para adoção, escolhe o caminho de duplicação correto, executa-o como uma operação assíncrona monitorada, deixa o resultado pronto para uso e mantém a sincronização ao longo do tempo.
+Plano de controle de adoção para repositórios do GitHub. Não é um "wrapper" para bifurcações – é uma camada completa que avalia a prontidão para adoção, escolhe o caminho de duplicação correto, executa-o como uma operação assíncrona monitorada, mantém o resultado executável, mantém a sincronização ao longo do tempo e – uma novidade na versão 1.1.0 – renomeia o código de forma coerente quando você estiver pronto para torná-lo seu.
+
+## Novidades na versão 1.1.0
+
+Camada 7 – **Renomeação poliglota com consciência da estrutura da árvore sintática (AST)**. O comando `forkable rename plan` gera uma diferença (diff) que pode ser revisada, abrangendo arquivos de identidade, símbolos de código (26 linguagens via ast-grep) e superfícies textuais não relacionadas ao código. O comando `forkable rename apply` faz um snapshot da árvore, executa todas as etapas, regenera os arquivos de bloqueio e deixa um manifesto para a regeneração de qualquer arquivo binário. O comando `forkable rename rollback` restaura o último snapshot. Não utiliza cadeias de comandos `sed`. Garante a correção dos limites das palavras. Considera a capitalização.
 
 ## O que o forkable faz
 
@@ -28,6 +32,7 @@ O forkable cuida de tudo o que vem a seguir.
 | Sincronização | Utiliza a API de sincronização com o repositório original do GitHub. Reporta divergências de forma transparente. Recorre a pull requests (PRs) quando necessário. |
 | Gerenciamento em Massa | Lista, verifica o status e sincroniza em lote seus forks. |
 | Registros | Registro legível por máquina de cada operação. Log de auditoria em SQLite local. |
+| Renomeação | Renomeação poliglota com consciência da estrutura da árvore sintática – arquivos de identidade, símbolos de código, superfícies textuais, regeneração de arquivos de bloqueio. |
 
 ## Formas de Uso
 
@@ -96,6 +101,11 @@ Todos os comandos aceitam a opção `--json` para saída legível por máquina.
 - `forkable_receipt` — registro legível por máquina de qualquer operação
 - `forkable_audit_log` — histórico de alterações (apenas anexos)
 
+### Renomeação (Camada 7 – novidade na versão 1.1.0)
+- `forkable_rename_plan` – planejador de renomeação com consciência da estrutura da árvore sintática; gera uma diferença (diff) que pode ser revisada.
+- `forkable_rename_apply` – faz um snapshot e aplica as alterações em arquivos de identidade, símbolos, superfícies textuais e executa etapas adicionais.
+- `forkable_rename_rollback` – restaura a partir do último snapshot.
+
 ## Perfis de Configuração Inicial
 
 | Perfil | Para | Configuração Pós-Criação |
@@ -126,7 +136,7 @@ Consulte [SECURITY.md](SECURITY.md) para o modelo de ameaças e a política de r
 
 ## Status
 
-v1.0.0 — lançamento inicial. Construído de acordo com o padrão [shipcheck](https://github.com/mcp-tool-shop-org/shipcheck).
+Versão 1.1.0 – adiciona a Camada 7 (Renomeação). Construído com base no sistema de verificação [shipcheck](https://github.com/mcp-tool-shop-org/shipcheck).
 
 Consulte [SHIP_GATE.md](SHIP_GATE.md) para a avaliação do padrão.
 

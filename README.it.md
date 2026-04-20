@@ -12,7 +12,11 @@
   <a href="https://mcp-tool-shop-org.github.io/forkable/"><img src="https://img.shields.io/badge/Landing-Page-2563eb" alt="Landing Page"></a>
 </p>
 
-> Piano di controllo per l'adozione di repository GitHub. Non è un semplice wrapper per il fork, ma un livello completo che valuta la prontezza all'adozione, sceglie il percorso di duplicazione più appropriato, lo esegue come operazione asincrona monitorata, rende il risultato eseguibile e lo mantiene sincronizzato nel tempo.
+Un sistema di controllo per l'adozione di repository GitHub. Non è un semplice wrapper per il "fork" – è uno strato completo che valuta la prontezza per l'adozione, sceglie il percorso di duplicazione più appropriato, lo esegue come un'operazione asincrona monitorata, mantiene il risultato eseguibile, lo mantiene sincronizzato nel tempo e, novità della versione 1.1.0, lo rinomina in modo coerente quando siete pronti a considerarlo vostro.
+
+## Novità nella versione 1.1.0
+
+Livello 7 – **Rinomina polivalente consapevole dell'AST**. Il comando `forkable rename plan` genera una diff revisionabile che interessa i file di identità, i simboli del codice (26 linguaggi tramite ast-grep) e le superfici testuali non relative al codice. Il comando `forkable rename apply` crea uno snapshot dell'albero, esegue tutte le fasi, rigenera i file di blocco e lascia un file di manifest per la rigenerazione degli asset binari. Il comando `forkable rename rollback` ripristina l'ultimo snapshot. Nessuna catena di comandi `sed`. Corretto per i confini delle parole. Sensibile alle maiuscole/minuscole.
 
 ## Cosa fa Forkable
 
@@ -28,6 +32,7 @@ Forkable si occupa di "tutto il resto".
 | Sincronizzazione | Utilizza l'API di GitHub per la sincronizzazione con il repository originale. Segnala onestamente eventuali divergenze. In caso di necessità, ricorre alla creazione di una pull request. |
 | Gestione | Elenca, verifica lo stato e sincronizza in batch i tuoi fork. |
 | Registrazioni | Record leggibile dalle macchine di ogni operazione. Registro delle attività in formato SQLite locale. |
+| Rinomina | Rinomina polivalente consapevole dell'AST – file di identità, simboli del codice, superfici testuali, rigenerazione dei file di blocco. |
 
 ## Modalità di utilizzo
 
@@ -96,6 +101,11 @@ Tutti i comandi accettano l'opzione `--json` per l'output leggibile dalle macchi
 - `forkable_receipt` — record leggibile dalle macchine di qualsiasi operazione
 - `forkable_audit_log` — registro storico delle attività
 
+### Rinomina (Livello 7 – novità della versione 1.1.0)
+- `forkable_rename_plan` – pianificatore di rinomina consapevole dell'AST; genera una diff revisionabile.
+- `forkable_rename_apply` – crea snapshot e applica modifiche a file di identità, simboli, superfici testuali ed esegue passaggi successivi.
+- `forkable_rename_rollback` – ripristina dall'ultimo snapshot.
+
 ## Profili di configurazione iniziale
 
 | Profilo | Per | Configurazione post-creazione |
@@ -126,7 +136,7 @@ Consultare il file [SECURITY.md](SECURITY.md) per il modello di minacce e le pol
 
 ## Stato
 
-v1.0.0 — versione iniziale. Costruito secondo i criteri di [shipcheck](https://github.com/mcp-tool-shop-org/shipcheck).
+Versione 1.1.0 – aggiunge il Livello 7 (Rinomina). Costruito secondo le linee guida di [shipcheck](https://github.com/mcp-tool-shop-org/shipcheck).
 
 Consultare il file [SHIP_GATE.md](SHIP_GATE.md) per la valutazione dei criteri di rilascio.
 

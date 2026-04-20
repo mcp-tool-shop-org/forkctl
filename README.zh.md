@@ -12,7 +12,11 @@
   <a href="https://mcp-tool-shop-org.github.io/forkable/"><img src="https://img.shields.io/badge/Landing-Page-2563eb" alt="Landing Page"></a>
 </p>
 
-> 用于 GitHub 代码仓库的采用控制层。它不是一个简单的代码仓库复制工具，而是一个端到端的解决方案，用于评估是否适合采用，选择合适的复制方式，将其作为可跟踪的异步操作执行，确保结果可运行，并随着时间的推移保持同步。
+GitHub 仓库的采用控制层。它不是一个简单的代码复制工具，而是一个端到端的解决方案，用于评估是否适合采用、选择合适的复制方式、以跟踪的异步操作执行复制，保留可运行的结果，并在一段时间内保持同步，并且——在 v1.1.0 版本中新增的功能——当您准备好将其视为自己的代码时，可以对其进行合理重命名。
+
+## v1.1.0 版本的新功能
+
+第 7 层 —— **具有 AST 意识的多语言重命名功能**。`forkable rename plan` 会生成一个可审查的差异，涵盖身份文件、代码符号（通过 ast-grep 支持 26 种语言）以及非代码文本内容。`forkable rename apply` 会快照当前代码库，运行所有步骤，重新生成锁文件，并为任何二进制文件生成资源重新生成清单。`forkable rename rollback` 会恢复到最新的快照。不使用 `sed` 命令链。能够正确处理单词边界。考虑大小写。
 
 ## Forkable 的功能
 
@@ -22,12 +26,13 @@ Forkable 负责完成这些“其他所有步骤”。
 
 | 层 | 其作用 |
 |--------------|-----------------------------------------------------------------------------------------------|
-| 评估 | 评估代码仓库的采用就绪度，推荐复制、模板或导入，并提出上游代码的修复建议。 |
+| 评估 | 评估代码仓库的采用 readiness，推荐复制、模板或导入，并提出上游代码的修复建议。 |
 | 执行 | 将代码作为可跟踪的异步操作进行复制。在开始时，会显示与组织/企业复制策略相关的限制。 |
 | 初始化 | 基于配置文件的后续操作——配置与上游的连接，更新 README 文件，扫描代码差异，并提供可运行的结果。 |
 | 同步 | 调用 GitHub 的合并上游 API。诚实地报告代码差异。如果需要，可以回退到创建拉取请求。 |
 | 管理 | 列出、检查健康状况并批量同步您的复制的代码仓库。 |
 | 记录 | 机器可读的每项操作记录。本地 SQLite 数据库中的审计日志。 |
+| 重命名 | 具有 AST 意识的多语言重命名功能——身份文件、代码符号、文本内容、锁文件重新生成。 |
 
 ## 使用场景
 
@@ -66,7 +71,7 @@ npx @mcptoolshop/forkable fleet-health
 <!-- FORKABLE_COUNTS_END -->
 
 ### 评估
-- `forkable_assess` — 评估代码仓库的采用就绪度，显示限制和优势。
+- `forkable_assess` — 评估代码仓库的采用 readiness，显示限制和优势。
 - `forkable_choose_path` — 选择复制 | 模板 | 导入 | 独立复制。
 - `forkable_make_forkable` — 修复上游代码仓库（默认：计划；可选：创建拉取请求）。
 
@@ -96,6 +101,11 @@ npx @mcptoolshop/forkable fleet-health
 - `forkable_receipt` — 机器可读的每项操作记录。
 - `forkable_audit_log` — 仅追加历史记录。
 
+### 重命名 (第 7 层，v1.1.0 版本新增)
+- `forkable_rename_plan` —— 具有 AST 意识的重命名计划器；生成可审查的差异。
+- `forkable_rename_apply` —— 快照 + 应用身份信息 + 符号 + 文本内容 + 后续步骤。
+- `forkable_rename_rollback` —— 从最新快照恢复。
+
 ## 初始化配置文件
 
 | 配置文件 | 用于 | 后续操作 |
@@ -111,8 +121,8 @@ npx @mcptoolshop/forkable fleet-health
 | 变量 | 必需 | 默认值 | 备注 |
 |----------------------|----------|----------------------------------------------|-------------------------------------------------|
 | `GITHUB_TOKEN`       | 是 | —                                            | `repo`、`workflow`、`read:org` 权限范围 |
-| `GITHUB_API_URL`     | 否 | `https://api.github.com`                     | 适用于 GHES / ghe.com |
-| `FORKABLE_STATE_DIR` | 否 | 操作系统用户状态目录（通过 `env-paths`） | SQLite 数据库和审计数据库的存储位置。 |
+| `GITHUB_API_URL`     | no       | `https://api.github.com`                     | 适用于 GHES / ghe.com |
+| `FORKABLE_STATE_DIR` | no       | 操作系统用户状态目录（通过 `env-paths`） | SQLite 数据库和审计数据库的存储位置。 |
 
 ## 安全
 
@@ -126,7 +136,7 @@ npx @mcptoolshop/forkable fleet-health
 
 ## 状态
 
-v1.0.0 — 初始发布。 按照 [shipcheck](https://github.com/mcp-tool-shop-org/shipcheck) 规范进行构建。
+v1.1.0 版本 —— 添加了第 7 层（重命名）。该版本经过了 [shipcheck](https://github.com/mcp-tool-shop-org/shipcheck) 质量检查。
 
 请参阅 [SHIP_GATE.md](SHIP_GATE.md) 文件，了解评估标准。
 

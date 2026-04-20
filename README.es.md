@@ -12,7 +12,11 @@
   <a href="https://mcp-tool-shop-org.github.io/forkable/"><img src="https://img.shields.io/badge/Landing-Page-2563eb" alt="Landing Page"></a>
 </p>
 
-> Capa de control de adopción para repositorios de GitHub. No es un simple envoltorio para bifurcaciones, sino una capa integral que evalúa la preparación para la adopción, elige la ruta de duplicación adecuada, la ejecuta como una operación asíncrona supervisada, deja el resultado listo para su uso y lo mantiene sincronizado con el tiempo.
+Control de adopción para repositorios de GitHub. No es un envoltorio para bifurcaciones, sino una capa integral que evalúa la preparación para la adopción, elige la ruta de duplicación adecuada, la ejecuta como una operación asíncrona supervisada, mantiene el resultado ejecutable, lo mantiene sincronizado con el tiempo y, novedad en la versión 1.1.0, lo renombra de manera coherente cuando esté listo para considerarlo suyo.
+
+## Novedades en la versión 1.1.0
+
+Capa 7: **Renombramiento políglota con conocimiento de la estructura del árbol sintáctico (AST).** El comando `forkable rename plan` genera una diferencia (diff) que se puede revisar, que abarca archivos de identidad, símbolos de código (26 lenguajes a través de ast-grep) y superficies textuales no relacionadas con el código. El comando `forkable rename apply` crea una instantánea del árbol, ejecuta todas las fases, regenera los archivos de bloqueo y deja un manifiesto de regeneración de activos para cualquier elemento binario. El comando `forkable rename rollback` restaura la última instantánea. No utiliza cadenas de comandos `sed`. Corrige los límites de las palabras. Considera las mayúsculas y minúsculas.
 
 ## ¿Qué hace Forkable?
 
@@ -28,6 +32,7 @@ Forkable se encarga de "todo lo demás".
 | Sincronización | Utiliza la API de GitHub para fusionar los cambios con el repositorio original. Informa de forma transparente sobre cualquier divergencia. Si es necesario, recurre a la creación de una solicitud de extracción (PR). |
 | Gestión | Lista, verifica el estado y sincroniza por lotes tus bifurcaciones. |
 | Registros | Registro legible por máquina de cada operación. Registro de auditoría en SQLite local. |
+| Renombrar | Renombramiento políglota con conocimiento de la estructura del árbol sintáctico: archivos de identidad, símbolos de código, superficies textuales, regeneración de archivos de bloqueo. |
 
 ## Formas de uso
 
@@ -96,6 +101,11 @@ Todos los comandos aceptan la opción `--json` para obtener una salida legible p
 - `forkable_receipt`: registro legible por máquina de cualquier operación.
 - `forkable_audit_log`: historial de solo escritura.
 
+### Renombrar (Capa 7: novedad en la versión 1.1.0)
+- `forkable_rename_plan`: planificador de renombramiento con conocimiento de la estructura del árbol sintáctico; genera una diferencia que se puede revisar.
+- `forkable_rename_apply`: crea instantáneas y aplica cambios a archivos de identidad, símbolos, texto y fases posteriores.
+- `forkable_rename_rollback`: restaura a partir de la última instantánea.
+
 ## Perfiles de configuración inicial
 
 | Perfil | Para | Configuración posterior |
@@ -126,7 +136,7 @@ Consulte [SECURITY.md](SECURITY.md) para obtener información sobre el modelo de
 
 ## Estado
 
-v1.0.0 — lanzamiento inicial. Construido según la puerta [shipcheck](https://github.com/mcp-tool-shop-org/shipcheck).
+Versión 1.1.0: añade la Capa 7 (Renombrar). Construido según la puerta [shipcheck](https://github.com/mcp-tool-shop-org/shipcheck).
 
 Consulte [SHIP_GATE.md](SHIP_GATE.md) para obtener la puntuación de la puerta.
 

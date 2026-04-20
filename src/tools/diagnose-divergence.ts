@@ -61,13 +61,18 @@ export const diagnoseDivergenceTool: ToolDescriptor<
 
       const branch = input.branch ?? forkData.default_branch;
       const upstream = forkData.parent.full_name;
+      const upstreamDefaultBranch = forkData.parent.default_branch;
       const [upstreamOwner, upstreamRepo] = upstream.split("/") as [string, string];
 
+      // Compare upstream's default branch (base) against the fork's branch (head).
+      // Using the fork's branch name on both sides silently misreports divergence
+      // whenever the fork renamed its default branch or the upstream uses a
+      // different default (e.g. master vs main).
       try {
         const cmp = await ctx.octokit.rest.repos.compareCommitsWithBasehead({
           owner: upstreamOwner,
           repo: upstreamRepo,
-          basehead: `${branch}...${owner}:${branch}`,
+          basehead: `${upstreamDefaultBranch}...${owner}:${branch}`,
         });
         const data = cmp.data as {
           status: string;

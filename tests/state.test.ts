@@ -1,4 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { CURRENT_SCHEMA_VERSION, openState, resolveDbPath, resolveStateDir } from "../src/lib/state.js";
 
 describe("state path resolution", () => {
@@ -32,12 +35,46 @@ describe("openState", () => {
     db.close();
   });
 
-  it("is idempotent on repeat open of the same DB file", () => {
-    const db1 = openState(":memory:");
+  it("is idempotent on repeat open of the same DB file (F-002)", () => {
+    // Two `openState(':memory:')` calls are each fresh DBs — the original test
+    // was semantically vacuous. Use a real tmp file so both opens hit the same
+    // database and we actually exercise the CREATE TABLE IF NOT EXISTS guard
+    // plus the "SELECT version FROM schema_version LIMIT 1" idempotency branch.
+    const tmpDir = mkdtempSync(join(tmpdir(), "forkable-state-"));
+    tmpDirsToCleanup.push(tmpDir);
+    const dbPath = join(tmpDir, "state.db");
+
+    const db1 = openState(dbPath);
+    // Seed a row so we can verify state survives across open calls.
+    const v1 = db1.prepare("SELECT version FROM schema_version").get() as { version: number };
+    expect(v1.version).toBe(CURRENT_SCHEMA_VERSION);
     db1.close();
-    const db2 = openState(":memory:");
-    const v = db2.prepare("SELECT COUNT(*) as c FROM schema_version").get() as { c: number };
-    expect(v.c).toBe(1);
+
+    // Second open on the same file — must NOT throw, must NOT insert a second
+    // schema_version row, must NOT re-create tables destructively.
+    const db2 = openState(dbPath);
+    const count = db2.prepare("SELECT COUNT(*) as c FROM schema_version").get() as { c: number };
+    expect(count.c).toBe(1);
+    const v2 = db2.prepare("SELECT version FROM schema_version").get() as { version: number };
+    expect(v2.version).toBe(CURRENT_SCHEMA_VERSION);
+
+    // And a third open, just to be sure the guard is stable across repeats.
     db2.close();
+    const db3 = openState(dbPath);
+    const count3 = db3.prepare("SELECT COUNT(*) as c FROM schema_version").get() as { c: number };
+    expect(count3.c).toBe(1);
+    db3.close();
   });
+});
+
+const tmpDirsToCleanup: string[] = [];
+afterEach(() => {
+  while (tmpDirsToCleanup.length > 0) {
+    const dir = tmpDirsToCleanup.pop()!;
+    try {
+      rmSync(dir, { recursive: true, force: true });
+    } catch {
+      /* ignore — best-effort temp cleanup */
+    }
+  }
 });

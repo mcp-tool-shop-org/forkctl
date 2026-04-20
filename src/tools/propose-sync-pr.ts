@@ -70,10 +70,48 @@ export const proposeSyncPrTool: ToolDescriptor<ProposeSyncPrInput, ProposeSyncPr
         });
       } catch (err) {
         const e = mapGitHubError(err);
-        if (e.code !== "GITHUB_VALIDATION") throw e; // 422 = ref already exists, ok
-        // Try to update the existing ref to point at the new SHA without force-push.
-        // Updating a ref to a non-fast-forward target normally fails — we let it fail
-        // and surface the existing branch as-is.
+        if (e.code !== "GITHUB_VALIDATION") throw e;
+        // 422 — branch may already exist. If it exists AND already points at
+        // the SHA we were about to sync to, this is an idempotent retry and
+        // we proceed silently. Otherwise surface a structured error so the
+        // user can delete the stale branch or pick a fresh syncBranch name
+        // rather than silently reusing it (the old behavior hid a real
+        // divergence: the existing branch could be pointing anywhere).
+        let existingSha: string | undefined;
+        try {
+          const existing = await ctx.octokit.rest.git.getRef({
+            owner,
+            repo,
+            ref: `heads/${input.syncBranch}`,
+          });
+          existingSha = existing.data.object.sha;
+        } catch (getErr) {
+          // Couldn't read the ref back — treat as unresolvable and surface.
+          throw new ForkableError(
+            "SYNC_BRANCH_EXISTS",
+            `Could not create sync branch '${input.syncBranch}' on ${owner}/${repo}.`,
+            {
+              hint: `Delete the stale branch (${owner}:${input.syncBranch}) or pass a different syncBranch name.`,
+              details: { syncBranch: input.syncBranch, upstreamSha },
+              cause: getErr,
+            },
+          );
+        }
+        if (existingSha !== upstreamSha) {
+          throw new ForkableError(
+            "SYNC_BRANCH_EXISTS",
+            `Sync branch '${input.syncBranch}' already exists on ${owner}/${repo} and points at a different commit.`,
+            {
+              hint: `Delete ${owner}:${input.syncBranch} or pass a different syncBranch name. Expected ${upstreamSha.slice(0, 7)}, found ${existingSha.slice(0, 7)}.`,
+              details: {
+                syncBranch: input.syncBranch,
+                expectedSha: upstreamSha,
+                existingSha,
+              },
+            },
+          );
+        }
+        // Same SHA — safe to proceed and open/find the PR.
       }
 
       try {

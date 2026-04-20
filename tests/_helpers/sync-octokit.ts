@@ -18,8 +18,17 @@ export interface SyncOctokitConfig {
     total_commits: number;
     files?: { filename: string; status: string }[];
   };
-  /** Upstream ref SHA returned by git.getRef */
+  /** Upstream ref SHA returned by git.getRef for heads/<upstream default branch> */
   upstreamSha?: string;
+  /**
+   * If set, the git.getRef call that targets heads/<syncBranch> (used by
+   * propose-sync-pr's second lookup after a 422 on createRef) returns THIS
+   * SHA instead of upstreamSha. Simulates a stale/diverged pre-existing
+   * sync branch so SYNC_BRANCH_EXISTS surfaces.
+   */
+  existingSyncBranchSha?: string;
+  /** Name of the sync branch — used to route the second getRef call. */
+  syncBranchName?: string;
   /** What pulls.create should do */
   prCreate?: "ok" | "conflict";
   /** What git.createRef should do */
@@ -29,6 +38,8 @@ export interface SyncOctokitConfig {
     mergeUpstream?: unknown[];
     createRef?: unknown[];
     pullsCreate?: unknown[];
+    getRef?: unknown[];
+    compareCommits?: unknown[];
   };
 }
 
@@ -68,20 +79,38 @@ export function syncFakeOctokit(cfg: SyncOctokitConfig = {}): Octokit {
               return { data: { merge_type: "fast-forward", base_branch: "octocat/source:main", message: "fast-forwarded" } };
           }
         },
-        compareCommitsWithBasehead: async () => ({
-          data: cfg.compare ?? {
-            status: "behind",
-            ahead_by: 0,
-            behind_by: 3,
-            total_commits: 3,
-            files: [{ filename: "README.md", status: "modified" }],
-          },
-        }),
+        compareCommitsWithBasehead: async (params: {
+          owner: string;
+          repo: string;
+          basehead: string;
+        }) => {
+          cfg.calls?.compareCommits?.push(params);
+          return {
+            data: cfg.compare ?? {
+              status: "behind",
+              ahead_by: 0,
+              behind_by: 3,
+              total_commits: 3,
+              files: [{ filename: "README.md", status: "modified" }],
+            },
+          };
+        },
       },
       git: {
-        getRef: async () => ({
-          data: { object: { sha: cfg.upstreamSha ?? "abc1234567890" } },
-        }),
+        getRef: async (params: { owner: string; repo: string; ref: string }) => {
+          cfg.calls?.getRef?.push(params);
+          // If the caller is reading back the existing sync branch (after a
+          // 422 on createRef), honour the configured existingSyncBranchSha so
+          // tests can simulate a stale branch that points elsewhere.
+          const syncName = cfg.syncBranchName ?? "forkable/sync-from-upstream";
+          if (
+            cfg.existingSyncBranchSha !== undefined &&
+            params.ref === `heads/${syncName}`
+          ) {
+            return { data: { object: { sha: cfg.existingSyncBranchSha } } };
+          }
+          return { data: { object: { sha: cfg.upstreamSha ?? "abc1234567890" } } };
+        },
         createRef: async (params: unknown) => {
           cfg.calls?.createRef?.push(params);
           if (cfg.createRef === "exists") throw err(422, "Reference already exists");

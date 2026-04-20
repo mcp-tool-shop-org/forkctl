@@ -61,7 +61,7 @@ npx @mcptoolshop/forkable fleet-health
 
 Tutti i comandi accettano l'opzione `--json` per l'output leggibile dalle macchine.
 
-## Gli strumenti
+## I diciannove strumenti
 
 ### Valutazione
 - `forkable_assess` — punteggio di prontezza all'adozione, blocchi, punti di forza

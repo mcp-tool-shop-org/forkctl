@@ -53,9 +53,18 @@ function recordAudit(
 }
 
 function extractOperationId(result: ToolResult<unknown>): string | undefined {
-  if (!result.ok) return undefined;
-  const data = result.data as { operationId?: unknown; operation?: { id?: unknown } } | null;
-  if (!data) return undefined;
+  // Inspect both success and failure payloads. Async operations (e.g. fork
+  // creation) may register an operation row and THEN fail — the op id still
+  // needs to be audit-linked so the caller can look the op up later.
+  const payload: unknown = result.ok
+    ? result.data
+    : (result.error as { details?: unknown }).details;
+  return readOperationId(payload);
+}
+
+function readOperationId(payload: unknown): string | undefined {
+  if (!payload || typeof payload !== "object") return undefined;
+  const data = payload as { operationId?: unknown; operation?: { id?: unknown } };
   if (typeof data.operationId === "string") return data.operationId;
   if (data.operation && typeof data.operation.id === "string") return data.operation.id;
   return undefined;

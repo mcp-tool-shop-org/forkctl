@@ -26,7 +26,10 @@ export interface FleetOctokitConfig {
   /** Per-fork mergeUpstream behavior */
   mergeByFork?: Record<string, "ok-ff" | "ok-merge" | "ok-none" | "conflict" | "error">;
   /** Track calls */
-  calls?: { mergeUpstream?: Array<{ owner: string; repo: string; branch: string }> };
+  calls?: {
+    mergeUpstream?: Array<{ owner: string; repo: string; branch: string }>;
+    compareCommits?: Array<{ owner: string; repo: string; basehead: string }>;
+  };
 }
 
 function err(status: number, msg: string): RequestError {
@@ -103,6 +106,7 @@ export function fleetFakeOctokit(cfg: FleetOctokitConfig = {}): Octokit {
           repo: string;
           basehead: string;
         }) => {
+          cfg.calls?.compareCommits?.push({ owner, repo, basehead });
           // Determine fork's full_name from basehead string ("branch...forkOwner:branch")
           const m = basehead.match(/\.\.\.([^:]+):/);
           const forkOwner = m ? m[1]! : "";

@@ -126,7 +126,42 @@ async function openPatchPr(
     });
   } catch (err) {
     const e = mapGitHubError(err);
-    if (e.code !== "GITHUB_VALIDATION") throw e; // 422 = ref exists, ok to reuse
+    if (e.code !== "GITHUB_VALIDATION") throw e;
+    // 422 — branch may already exist. Idempotent reuse is only safe if the
+    // existing branch points at the same base SHA; otherwise we'd be
+    // committing adoption-readiness patches on top of unknown work and
+    // silently opening a PR from that mess. Surface a structured error
+    // instead (old behavior: reuse regardless of where the ref pointed).
+    let existingSha: string | undefined;
+    try {
+      const existing = await octokit.rest.git.getRef({
+        owner,
+        repo,
+        ref: `heads/${branch}`,
+      });
+      existingSha = existing.data.object.sha;
+    } catch (getErr) {
+      throw new ForkableError(
+        "MAKE_FORKABLE_BRANCH_EXISTS",
+        `Could not create or read branch '${branch}' on ${owner}/${repo}.`,
+        {
+          hint: `Delete the stale branch (${owner}:${branch}) or pass a different branch name via input.branch.`,
+          details: { branch, baseSha },
+          cause: getErr,
+        },
+      );
+    }
+    if (existingSha !== baseSha) {
+      throw new ForkableError(
+        "MAKE_FORKABLE_BRANCH_EXISTS",
+        `Branch '${branch}' already exists on ${owner}/${repo} and points at a different commit.`,
+        {
+          hint: `Delete ${owner}:${branch} or pass a different branch name via input.branch. Expected ${baseSha.slice(0, 7)}, found ${existingSha.slice(0, 7)}.`,
+          details: { branch, expectedSha: baseSha, existingSha },
+        },
+      );
+    }
+    // Same SHA — safe to reuse the branch.
   }
 
   for (const step of steps) {

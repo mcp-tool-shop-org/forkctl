@@ -55,5 +55,5 @@ npx @mcptoolshop/forkable sync myhandle/my-fork
 - Want the day-to-day patterns? [Usage](../usage/).
 - Want every knob? [Configuration](../configuration/).
 - Want to look up a specific tool? [Reference](../reference/).
-- Want to know how it's wired internally? [Architecture](../architecture/).
+- Want to know how it's wired internally? [Architecture](./architecture/).
 - Worried about secrets and force-pushes? [Security](../security/) explicitly states what forkable will and won't do.

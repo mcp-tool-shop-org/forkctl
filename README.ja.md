@@ -61,7 +61,7 @@ npx @mcptoolshop/forkable fleet-health
 
 すべてのコマンドは、機械可読な出力のために`--json`オプションを受け入れます。
 
-## nineteenつのツール
+## 19のツール
 
 ### 評価
 - `forkable_assess`：導入の準備状況のスコア、問題点、利点

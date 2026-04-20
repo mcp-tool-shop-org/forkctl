@@ -205,4 +205,4 @@ type ToolResult<T> =
   | { ok: false; error: { code: ForkableErrorCode; message: string; hint?: string; details?: unknown } };
 ```
 
-Error codes are exhaustively enumerated in `src/lib/errors.ts` — see the [Architecture](../architecture/) page for the full list.
+Error codes are exhaustively enumerated in `src/lib/errors.ts` — see the [Architecture](./architecture/) page for the full list.

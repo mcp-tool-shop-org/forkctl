@@ -28,6 +28,9 @@ export type ForkableErrorCode =
   // Sync
   | "SYNC_CONFLICT"
   | "SYNC_DIVERGED"
+  | "SYNC_BRANCH_EXISTS"
+  // Make-forkable
+  | "MAKE_FORKABLE_BRANCH_EXISTS"
   // Generic
   | "INTERNAL"
   | "NOT_IMPLEMENTED";
@@ -67,11 +70,42 @@ export class ForkableError extends Error {
   }
 }
 
+/**
+ * Patterns for secrets/tokens that must never leak into user-visible error
+ * payloads. Kept here (not imported from github.ts) to avoid a circular import;
+ * the same TOKEN_PATTERN is mirrored in github.ts's scrubToken() and both stay
+ * in sync.
+ */
+const REDACTION_PATTERNS: { pattern: RegExp; replacement: string }[] = [
+  // GitHub tokens (ghp_, gho_, ghu_, ghs_, ghr_, github_pat_)
+  { pattern: /\b(ghp|gho|ghu|ghs|ghr|github_pat)_[A-Za-z0-9_]{16,}\b/g, replacement: "[redacted-token]" },
+  // Bearer/authorization headers that may have been echoed back in error text
+  { pattern: /\b[Bb]earer\s+[A-Za-z0-9._\-]+/g, replacement: "Bearer [redacted-token]" },
+  // OpenAI keys
+  { pattern: /\bsk-(proj-)?[A-Za-z0-9_\-]{20,}\b/g, replacement: "[redacted-key]" },
+  // AWS access keys
+  { pattern: /\bAKIA[0-9A-Z]{16}\b/g, replacement: "[redacted-key]" },
+  // Google API keys
+  { pattern: /\bAIza[0-9A-Za-z_\-]{35}\b/g, replacement: "[redacted-key]" },
+];
+
+/**
+ * Strip tokens/secrets that may appear in raw error messages before they
+ * reach a user-visible ForkableError payload.
+ */
+export function redact(input: string): string {
+  let out = input;
+  for (const { pattern, replacement } of REDACTION_PATTERNS) {
+    out = out.replace(pattern, replacement);
+  }
+  return out;
+}
+
 /** Coerces any thrown value into a ForkableError without leaking stack traces. */
 export function asForkableError(err: unknown): ForkableError {
   if (err instanceof ForkableError) return err;
   if (err instanceof Error) {
-    return new ForkableError("INTERNAL", err.message, { cause: err });
+    return new ForkableError("INTERNAL", redact(err.message), { cause: err });
   }
   return new ForkableError("INTERNAL", "Unknown error");
 }

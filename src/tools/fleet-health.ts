@@ -127,12 +127,16 @@ async function healthOne(
   }
   const upstream = data.parent.full_name;
   const branch = data.default_branch;
+  const upstreamDefaultBranch = data.parent.default_branch;
   const [upOwner, upRepo] = upstream.split("/") as [string, string];
 
+  // Base is upstream's default branch; head is the fork's branch. Using the
+  // fork's branch name on both sides misreports divergence when the fork has
+  // renamed its default or the upstream uses a different one (master vs main).
   const cmp = await octokit.rest.repos.compareCommitsWithBasehead({
     owner: upOwner,
     repo: upRepo,
-    basehead: `${branch}...${owner}:${branch}`,
+    basehead: `${upstreamDefaultBranch}...${owner}:${branch}`,
   });
   const c = cmp.data as {
     status: string;

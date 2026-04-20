@@ -63,6 +63,34 @@ describe("forkable_propose_sync_pr", () => {
     expect(result.error.code).toBe("INVALID_INPUT");
   });
 
+  it("stale sync branch at different SHA surfaces SYNC_BRANCH_EXISTS (backend F-003)", async () => {
+    // After createRef returns 422, the handler reads back the existing branch.
+    // If the existing branch points at a SHA different from upstream's HEAD,
+    // that's a real collision and we must surface SYNC_BRANCH_EXISTS rather
+    // than silently reusing the stale branch (which would hide divergence).
+    const oct = syncFakeOctokit({
+      createRef: "exists",
+      upstreamSha: "upstreamhead00",
+      existingSyncBranchSha: "staleshaffff11",
+      syncBranchName: "forkable/sync-from-upstream",
+    });
+    const result = await proposeSyncPrTool.handler(
+      {
+        fork: "myhandle/fork",
+        syncBranch: "forkable/sync-from-upstream",
+        prTitle: "forkable: sync from upstream",
+      },
+      ctx(oct),
+    );
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.code).toBe("SYNC_BRANCH_EXISTS");
+    expect(result.error.hint).toMatch(/delete|different syncBranch/i);
+    expect(result.error.details).toMatchObject({
+      syncBranch: "forkable/sync-from-upstream",
+    });
+  });
+
   it("PR conflict (existing PR) surfaces GITHUB_VALIDATION with hint", async () => {
     const oct = syncFakeOctokit({ prCreate: "conflict" });
     const result = await proposeSyncPrTool.handler(

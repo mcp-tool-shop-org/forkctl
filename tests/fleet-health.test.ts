@@ -49,6 +49,38 @@ describe("forkable_fleet_health", () => {
     expect(result.data.scanned).toBe(1);
   });
 
+  it("uses upstream default branch when fork renamed its default (backend F-002)", async () => {
+    // Fork renamed main→trunk; upstream still on main. Compare must be
+    // upstream-main ... fork-owner:trunk, NOT trunk...trunk.
+    const calls = {
+      compareCommits: [] as Array<{ owner: string; repo: string; basehead: string }>,
+    };
+    const oct = fleetFakeOctokit({
+      myRepos: [
+        {
+          full_name: "me/renamed",
+          fork: true,
+          parent: { full_name: "octocat/source", default_branch: "main" },
+          default_branch: "trunk",
+        },
+      ],
+      compareByFork: { "me/renamed": { status: "behind", ahead_by: 0, behind_by: 3 } },
+      calls,
+    });
+    const result = await fleetHealthTool.handler(
+      { forks: ["me/renamed"], limit: 25 },
+      ctx(oct),
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(calls.compareCommits).toHaveLength(1);
+    const cmp = calls.compareCommits[0]!;
+    expect(cmp.owner).toBe("octocat");
+    expect(cmp.repo).toBe("source");
+    expect(cmp.basehead).toBe("main...me:trunk");
+    expect(result.data.forks[0]!.status).toBe("behind");
+  });
+
   it("non-fork → no_upstream", async () => {
     const oct = fleetFakeOctokit({
       myRepos: [

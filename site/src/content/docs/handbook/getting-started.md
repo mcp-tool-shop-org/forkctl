@@ -91,7 +91,7 @@ Edit your MCP client config:
 }
 ```
 
-Restart your client. The 19 tools appear under the `forkable` server.
+Restart your client. The 22 tools appear under the `forkable` server.
 
 ## Smoke test
 

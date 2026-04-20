@@ -62,7 +62,7 @@ npx @mcptoolshop/forkable fleet-health
 Toutes les commandes acceptent l'option `--json` pour une sortie lisible par machine.
 
 <!-- FORKABLE_COUNTS_START -->
-## Les dix-neuf outils
+## Les vingt-deux outils
 <!-- FORKABLE_COUNTS_END -->
 
 ### Évaluation

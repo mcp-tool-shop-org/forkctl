@@ -8,7 +8,7 @@ Tracked against [shipcheck](https://github.com/mcp-tool-shop-org/shipcheck) v1.0
 - [x] Threat model section in README (link to SECURITY.md)
 - [x] No secrets committed; `.env.example` only
 - [x] No telemetry, no outbound calls beyond configured GitHub API
-- [x] Tool inputs validated through Zod (every one of 19 tools)
+- [x] Tool inputs validated through Zod (every one of 22 tools)
 - [x] Audit log redacts known sensitive keys + GitHub PAT pattern in string values
 - [x] Dependency scan passing on CI (npm audit: 0 vulnerabilities)
 
@@ -30,8 +30,8 @@ Tracked against [shipcheck](https://github.com/mcp-tool-shop-org/shipcheck) v1.0
 
 ## Gate D — Hygiene
 
-- [x] `npm run verify` passes (typecheck + 162 tests + build)
-- [x] Version matches tag (v1.0.0)
+- [x] `npm run verify` passes (typecheck + 378 tests + build)
+- [x] Version matches tag (v1.1.0)
 - [x] Dependency scanning enabled (CI runs npm audit indirectly via npm ci)
 - [x] Clean packaging (`files` field restricts publish to dist + docs)
 
@@ -46,4 +46,13 @@ Tracked against [shipcheck](https://github.com/mcp-tool-shop-org/shipcheck) v1.0
 
 ---
 
-All hard gates A–D pass. Phase E full-treatment polish complete except translations (one user-run command pending).
+## v1.1.0 release readiness (2026-04-20)
+
+- [x] Layer 7 (Rename) shipped — 3 new tools (`forkable_rename_plan`, `forkable_rename_apply`, `forkable_rename_rollback`), taking the surface from 19 → 22 tools across 7 layers.
+- [x] All hard gates A–D still pass against the 22-tool surface.
+- [x] New error codes documented in handbook troubleshooting (RENAME_* series, STRING_LITERAL_REWRITTEN, ENV_REQUIRES_REVIEW, SYNC_BRANCH_EXISTS, MAKE_FORKABLE_BRANCH_EXISTS).
+- [x] CHANGELOG.md v1.1.0 entry added.
+- [x] `design/rename.md` marked SHIPPED.
+- [ ] Translations — v1.1.0 prose adds a single H3 "What's new" section + a Rename table row; full re-translation is pending user re-run of `polyglot-mcp/scripts/translate-all.mjs README.md`. Count headings inside FORKABLE_COUNTS markers already updated per-language.
+
+All hard gates A–D pass for v1.1.0. Phase E full-treatment polish complete except a fresh translation pass (one user-run command pending).

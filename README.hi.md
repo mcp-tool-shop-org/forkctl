@@ -62,7 +62,7 @@ npx @mcptoolshop/forkable fleet-health
 सभी कमांड मशीन-पठनीय आउटपुट के लिए `--json` स्वीकार करते हैं।
 
 <!-- FORKABLE_COUNTS_START -->
-## उन्नीस उपकरण
+## बाईस उपकरण
 <!-- FORKABLE_COUNTS_END -->
 
 ### आकलन

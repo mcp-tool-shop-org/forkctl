@@ -13,6 +13,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+## [1.1.0] - 2026-04-20
+
+### Added
+- Layer 7 — AST-aware polyglot rename (forkable_rename_plan/apply/rollback).
+- Structured logger (src/lib/logger.ts) with stderr JSON-line output.
+- Octokit retry + throttling plugins (transient 5xx / rate limit resilience).
+- Migration runner skeleton in state.
+- Handbook: troubleshooting page with all 26 ForkableErrorCode entries; rename page.
+- New error codes: SYNC_BRANCH_EXISTS, MAKE_FORKABLE_BRANCH_EXISTS, RENAME_* (7 codes), STRING_LITERAL_REWRITTEN, ENV_REQUIRES_REVIEW, RENAME_LANG_UNAVAILABLE, RENAME_DEEP_TS_FAILED.
+
+### Changed
+- Compare basehead in diagnose-divergence and fleet-health now uses upstream
+  default branch, not fork's branch (fixes silent 404 on renamed defaults).
+- propose-sync-pr and make-forkable no longer silently reuse a stale
+  branch on 422 — return SYNC_BRANCH_EXISTS / MAKE_FORKABLE_BRANCH_EXISTS.
+- OpenAI key regex tightened to structural match; loose fallback is MEDIUM.
+- Node minimum: 20 → 22 (Node 20 EOL 2026-04-30; action v4 sunset 2026-06-02).
+- CI: actions bumped v4 → v5, permissions: contents: read, npm audit added,
+  tarball verification added, pages.yml guards missing site/.
+
+### Fixed
+- All Stage A findings (bugs/security); all Stage B proactive findings
+  amended with humanization (UX-emphasized).
+- README flag: `--destination` → `--destination-org` (all 8 languages).
+- 2 dead handbook links.
+
 ## [1.0.0] - 2026-04-19
 
 Initial release. All hard gates A–D pass.

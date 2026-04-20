@@ -12,7 +12,11 @@
   <a href="https://mcp-tool-shop-org.github.io/forkable/"><img src="https://img.shields.io/badge/Landing-Page-2563eb" alt="Landing Page"></a>
 </p>
 
-> Adoption control plane for GitHub repos. Not a fork wrapper — an end-to-end layer that assesses adoption-readiness, chooses the right duplication path, executes it as a tracked async operation, leaves the result runnable, and keeps it synced over time.
+> Adoption control plane for GitHub repos. Not a fork wrapper — an end-to-end layer that assesses adoption-readiness, chooses the right duplication path, executes it as a tracked async operation, leaves the result runnable, keeps it synced over time, and — new in v1.1.0 — renames it coherently when you're ready to call it your own.
+
+## What's new in v1.1.0
+
+Layer 7 — **AST-aware polyglot rename**. `forkable rename plan` emits a reviewable diff across identity files, code symbols (26 languages via ast-grep), and non-code textual surfaces. `forkable rename apply` snapshots the tree, runs all passes, regenerates lockfiles, and leaves an asset-regeneration manifest for anything binary. `forkable rename rollback` restores the latest snapshot. No `sed` chains. Word-boundary correct. Casing-aware.
 
 ## What forkable does
 
@@ -28,6 +32,7 @@ Forkable owns the everything-else.
 | Sync         | Calls the GitHub merge-upstream API. Reports divergence honestly. Falls back to PR when needed. |
 | Fleet        | List, health-check, and batch-sync your forks.                                                 |
 | Receipts     | Machine-readable record of every operation. Audit log in local SQLite.                         |
+| Rename       | AST-aware polyglot rename — identity files, code symbols, textual surfaces, lockfile regen.    |
 
 ## Usage shapes
 
@@ -62,7 +67,7 @@ npx @mcptoolshop/forkable fleet-health
 All commands accept `--json` for machine-readable output.
 
 <!-- FORKABLE_COUNTS_START -->
-## The nineteen tools
+## The twenty-two tools
 <!-- FORKABLE_COUNTS_END -->
 
 ### Assessment
@@ -96,6 +101,11 @@ All commands accept `--json` for machine-readable output.
 - `forkable_receipt` — machine-readable record of any op
 - `forkable_audit_log` — append-only history
 
+### Rename (Layer 7 — new in v1.1.0)
+- `forkable_rename_plan` — AST-aware rename planner; emits reviewable diff
+- `forkable_rename_apply` — snapshots + applies identity + symbols + textual + post passes
+- `forkable_rename_rollback` — restores from latest snapshot
+
 ## Bootstrap profiles
 
 | Profile             | For                                                                | Aftercare                                                                       |
@@ -126,7 +136,7 @@ See [SECURITY.md](SECURITY.md) for the threat model and reporting policy. Key po
 
 ## Status
 
-v1.0.0 — initial release. Built to the [shipcheck](https://github.com/mcp-tool-shop-org/shipcheck) gate.
+v1.1.0 — adds Layer 7 (Rename). Built to the [shipcheck](https://github.com/mcp-tool-shop-org/shipcheck) gate.
 
 See [SHIP_GATE.md](SHIP_GATE.md) for the gate scorecard.
 

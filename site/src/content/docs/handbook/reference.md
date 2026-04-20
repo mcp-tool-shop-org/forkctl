@@ -1,6 +1,6 @@
 ---
 title: Tool Reference
-description: All nineteen forkable tools, grouped by layer, with inputs and outputs.
+description: All twenty-two forkable tools, grouped by layer, with inputs and outputs.
 sidebar:
   order: 4
 ---
@@ -194,6 +194,52 @@ CLI: `forkable receipt <operationId>`
 Query the append-only audit log. Filter by tool, operation id, ok flag, sinceMs.
 
 CLI: `forkable audit-log [--tool <name>] [--operation-id <id>] [--ok <true|false>] [--limit <n>]`
+
+## Rename *(new in v1.1.0)*
+
+The rename layer works on a *local working tree* rather than through the GitHub API. It performs an AST-aware coherent rename across identity files, code symbols, non-code textual surfaces, and a post-pass that regenerates lockfiles and emits an asset-regeneration manifest. See [Rename](./rename/) for a walkthrough.
+
+### `forkable_rename_plan`
+
+Read-only. Analyse the tree and produce a `RenamePlan` with the intended diff per layer, plus the human-reviewable file `.forkable/rename-plan.diff`.
+
+| Field | Type | Notes |
+|---|---|---|
+| `path` | string | Repo root (absolute or relative) |
+| `from` | string | Canonical old name (e.g. `forkable`) |
+| `to` | string | Canonical new name (e.g. `splitshift`) |
+| `layers` | `("identity" \| "symbols" \| "deep-ts" \| "textual" \| "post")[]` | Default: all except `deep-ts` (auto when tsconfig resolves) |
+| `exclude` | `string[]` | Glob patterns added to built-in excludes |
+| `lockfileStrategy` | `"regenerate" \| "skip"` | Default `"regenerate"` |
+| `deepTs` | boolean | Auto when `tsconfig.json` + `ts-morph` resolvable |
+
+Returns a `RenamePlan` — casing variant map, per-layer dry-run report, warnings (including `STRING_LITERAL_REWRITTEN` and `ENV_REQUIRES_REVIEW`).
+
+CLI: `forkable rename plan <path> --from <old> --to <new> [--exclude <glob>] [--no-deep-ts]`
+
+### `forkable_rename_apply`
+
+Consumes a `RenamePlan`. Snapshots the tree first, then runs the five passes in order (identity → symbols → deep-ts → textual → post). Returns a `RenameReceipt` with per-layer outcomes, paths moved, lockfiles regenerated, and any assets flagged for regeneration.
+
+| Field | Type | Notes |
+|---|---|---|
+| `path` | string | Repo root |
+| `plan` | string | Path to the `.forkable/rename-plan.json` produced by `plan` |
+| `planHash` | string | Optional — defends against stale plans (fails with `RENAME_PLAN_STALE`) |
+
+CLI: `forkable rename apply <path> --plan .forkable/rename-plan.json`
+
+### `forkable_rename_rollback`
+
+Restores from the latest snapshot. For git repos, `git reset --hard <pre-rename-HEAD>` + stash pop. For non-git repos, extracts the snapshot tarball.
+
+| Field | Type | Notes |
+|---|---|---|
+| `path` | string | Repo root |
+
+CLI: `forkable rename rollback <path>`
+
+If no snapshot exists, returns `RENAME_ROLLBACK_NOT_FOUND`. Snapshots are kept for 7 days.
 
 ## ToolResult shape
 

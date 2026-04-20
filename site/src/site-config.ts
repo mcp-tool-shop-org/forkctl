@@ -30,7 +30,7 @@ export const config: SiteConfig = {
     {
       kind: 'features',
       id: 'features',
-      title: 'Six layers, one product',
+      title: 'Seven layers, one product',
       subtitle: 'Forkable is not a fork wrapper. It is end-to-end adoption infrastructure.',
       features: [
         {
@@ -56,6 +56,10 @@ export const config: SiteConfig = {
         {
           title: 'Receipts',
           desc: 'Append-only SQLite audit log. Every operation has a machine-readable receipt. Tokens are redacted at write time.',
+        },
+        {
+          title: 'Rename · new in v1.1.0',
+          desc: 'AST-aware polyglot rename. Identity files, code symbols (tree-sitter, 26 languages), textual surfaces, lockfile regen. Reviewable diff, snapshotted apply, one-command rollback.',
         },
       ],
     },
@@ -95,7 +99,7 @@ export const config: SiteConfig = {
     {
       kind: 'features',
       id: 'tools',
-      title: 'The nineteen tools',
+      title: 'The twenty-two tools',
       subtitle: 'Every tool is schema-validated, audit-logged, and exposed through both MCP and CLI.',
       features: [
         {
@@ -121,6 +125,10 @@ export const config: SiteConfig = {
         {
           title: 'Receipts · 2',
           desc: 'forkable_receipt · forkable_audit_log',
+        },
+        {
+          title: 'Rename · 3 · new',
+          desc: 'forkable_rename_plan · forkable_rename_apply · forkable_rename_rollback',
         },
       ],
     },

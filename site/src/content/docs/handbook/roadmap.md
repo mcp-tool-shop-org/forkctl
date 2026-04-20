@@ -9,17 +9,19 @@ forkable ships small, landed chunks. Nothing goes in the "soon" column that does
 
 ## Shipped
 
+**v1.1.0 (2026-04-20)** — Layer 7 (Rename). Three new tools taking the surface to seven layers and twenty-two tools. AST-aware polyglot rename across identity files, code symbols (JS/TS/TSX/HTML/CSS bundled; other languages resolve at runtime), non-code textual surfaces, and a post-pass that regenerates lockfiles and emits an asset-regeneration manifest. Snapshotted apply; one-command rollback. See the [Rename handbook page](../rename/) for the walkthrough.
+
 **v1.0.0 (2026-04-19)** — initial release. Six layers, 19 tools, all schema-validated and audit-logged. MCP server + CLI with full parity.
 
 See the [CHANGELOG](https://github.com/mcp-tool-shop-org/forkable/blob/main/CHANGELOG.md) for the full list.
 
-## In design — Layer 7: `forkable rename` (target v1.1.0)
+## Landed design — Layer 7: `forkable rename`
 
-Forking a repo is easy. *Adopting* it as your own product means every reference — package names, class identifiers, badge URLs, lockfile hashes, even binaries — needs to change coherently. Existing tools either do template-time substitution (fails on repos that weren't built as templates) or `sed -i` chains (brittle, no casing awareness, corrupts partial matches).
+Forking a repo is easy. *Adopting* it as your own product means every reference — package names, class identifiers, badge URLs, lockfile hashes, even binaries — needs to change coherently. Existing tools either did template-time substitution (fails on repos that weren't built as templates) or `sed -i` chains (brittle, no casing awareness, corrupts partial matches).
 
-Layer 7 introduces AST-aware rename: a planner that understands what an identifier actually *is* across 26 languages and renames it the way a refactor tool would, while also handling every non-code surface (README, badges, repo URLs, lockfiles, binaries).
+Layer 7 shipped AST-aware rename in v1.1.0: a planner that understands what an identifier actually *is* and renames it the way a refactor tool would, while also handling every non-code surface (README, badges, repo URLs, lockfiles, binaries).
 
-**Tool surface (planned)**
+**Tool surface (shipped in v1.1.0)**
 
 - `forkable_rename_plan` — returns a reviewable `RenamePlan`.
 - `forkable_rename_apply` — consumes the plan, returns a `RenameReceipt`. Only mutating command.

@@ -62,7 +62,7 @@ npx @mcptoolshop/forkable fleet-health
 所有命令都支持 `--json` 参数，用于生成机器可读的输出。
 
 <!-- FORKABLE_COUNTS_START -->
-## 十九个工具
+## 二十二个工具
 <!-- FORKABLE_COUNTS_END -->
 
 ### 评估

@@ -199,6 +199,78 @@ Or delete the stale branch first.
 forkable make-forkable owner/source-repo --mode pr --branch forkable/adoption-fixes-v2
 ```
 
+### Rename (new in v1.1.0)
+
+#### `RENAME_INVALID_NAME`
+
+**What it means.** `--from` or `--to` failed validation — empty, whitespace, contains path separators, or produces the same casing variants in both positions.
+
+**How to recover.** Pass a plain, single-word identifier (kebab, snake, or camel — forkable produces the full variant set internally). No slashes, no spaces.
+
+#### `RENAME_NOT_A_REPO`
+
+**What it means.** The path you passed isn't a working tree — it's missing, it's a file, or it points at nothing forkable can snapshot.
+
+**How to recover.** Point at the repo root. Non-git directories are supported (snapshot uses a tarball); the directory just has to actually exist.
+
+#### `RENAME_SNAPSHOT_FAILED`
+
+**What it means.** forkable couldn't record a pre-apply snapshot. Usually a disk-full, permissions, or locked-file issue. Apply is refused when snapshot fails — rollback would be impossible.
+
+**What to check.** `details.cause` has the OS-level error. `.forkable/snapshots/` under the repo root needs to be writable.
+
+**How to recover.** Fix the underlying filesystem issue and re-run `rename apply`.
+
+#### `RENAME_APPLY_FAILED`
+
+**What it means.** One of the five passes (identity / symbols / deep-ts / textual / post) errored mid-apply. The snapshot is intact.
+
+**How to recover.** Run `forkable rename rollback <path>` to restore the pre-apply state, then review `details.layer` and `details.cause`. File an issue with the payload if the failure looks like a forkable bug.
+
+#### `RENAME_ROLLBACK_NOT_FOUND`
+
+**What it means.** `rename rollback` ran but no snapshot exists for this tree — either apply was never run, the snapshot expired (kept for 7 days), or `.forkable/snapshots/` was deleted.
+
+**How to recover.** If apply never succeeded, no rollback is needed. If the snapshot was removed by hand or timed out, recover from your own VCS history.
+
+#### `RENAME_PLAN_STALE`
+
+**What it means.** The `.forkable/rename-plan.json` you passed to `apply` no longer matches the working tree — files changed between `plan` and `apply`.
+
+**How to recover.** Re-run `forkable rename plan <path> --from <old> --to <new>` and re-review the new diff before calling `apply`.
+
+#### `RENAME_LOCKFILE_REGEN_FAILED`
+
+**What it means.** The post-pass deleted and tried to regenerate the lockfile (`npm install` / `pnpm install` / `cargo build` / `poetry lock` / `uv lock`) but the native install failed.
+
+**What to check.** `details.stderr` captures the toolchain's output. Most commonly: the package manager isn't installed, or a dependency no longer resolves.
+
+**How to recover.** Fix the toolchain or dependency issue, then regenerate the lockfile by hand. The rename itself is already applied; this is post-pass cleanup only.
+
+#### `RENAME_DEEP_TS_FAILED`
+
+**What it means.** The ts-morph deep pass errored — usually due to a malformed `tsconfig.json` or incompatible TS version.
+
+**How to recover.** Re-run with `--no-deep-ts` to skip this pass; the ast-grep symbol pass still handles the common cases. Open an issue with `details.cause` if it looks like a real ts-morph incompatibility.
+
+#### `RENAME_LANG_UNAVAILABLE`
+
+**What it means.** The ast-grep pass encountered a file in a language whose binding isn't bundled in v1.1.0 (JS, TS, TSX, HTML, CSS ship bundled; other languages resolve at runtime when the corresponding `@ast-grep/napi-*` binding is installed).
+
+**How to recover.** This is a warning, not a failure — the rename continues. Install the missing binding and re-run if you need that file rewritten. Full polyglot bundling is a v1.2.0 target.
+
+#### `STRING_LITERAL_REWRITTEN`
+
+**What it means.** The symbol pass rewrote `from` inside a string literal in source code. This is the default behaviour (most product-name string literals are real product references — error messages, config keys, log lines), surfaced as a warning so you can review.
+
+**How to recover.** Review `details.files` in the plan diff. If a specific file has an incidental match, add it to `--exclude` and re-plan.
+
+#### `ENV_REQUIRES_REVIEW`
+
+**What it means.** `.env*` files contain matches (key names or values referencing `from`) that forkable won't rewrite silently. These live in diff-only mode.
+
+**How to recover.** Open `.forkable/rename-plan.diff` and apply the `.env*` changes by hand — or accept them via an explicit `--apply-env` flag if you've reviewed the diff.
+
 ### Generic
 
 #### `INTERNAL`

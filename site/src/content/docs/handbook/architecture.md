@@ -5,7 +5,7 @@ sidebar:
   order: 5
 ---
 
-forkable is one TypeScript package that exposes the same nineteen tools through two transports (MCP stdio + commander CLI), behind a single dispatch boundary that handles validation and audit.
+forkable is one TypeScript package that exposes the same twenty-two tools through two transports (MCP stdio + commander CLI), behind a single dispatch boundary that handles validation and audit.
 
 ## High-level shape
 
@@ -25,8 +25,8 @@ forkable is one TypeScript package that exposes the same nineteen tools through 
    └─────────────────┬───────────────────┘
                      │
    ┌─────────────────┴───────────────────┐
-   │   19 ToolDescriptors (registry)     │
-   │   Six layers, all sharing ToolCtx   │
+   │   22 ToolDescriptors (registry)     │
+   │   Seven layers, all sharing ToolCtx │
    └─────┬─────────────────────┬─────────┘
          │                     │
          ▼                     ▼
@@ -37,7 +37,7 @@ forkable is one TypeScript package that exposes the same nineteen tools through 
    └──────────┘         └──────────────┘
 ```
 
-## Six layers
+## Seven layers
 
 | Layer | Responsibility | Tools |
 |---|---|---|
@@ -47,6 +47,9 @@ forkable is one TypeScript package that exposes the same nineteen tools through 
 | Sync | merge-upstream, divergence diagnosis, PR fallback | 3 |
 | Fleet | Many forks at once | 3 |
 | Receipts | Audit log + per-operation receipts | 2 |
+| Rename *(new in v1.1.0)* | AST-aware rename across identity, symbols, textual, post passes | 3 |
+
+The rename layer slots in after Receipts because it operates on a *working tree* rather than on the GitHub API — it runs entirely locally, uses Octokit only indirectly (to rewrite repo URL mentions), and is the first layer that writes back to the user's filesystem. Its three tools (`forkable_rename_plan`, `forkable_rename_apply`, `forkable_rename_rollback`) share the same dispatch boundary and audit surface as the first six layers. See [Rename](./rename/) for the user-facing walkthrough.
 
 ## The dispatch boundary
 
@@ -152,7 +155,14 @@ OPERATION_NOT_FOUND    OPERATION_TIMEOUT      OPERATION_FAILED
 SYNC_CONFLICT          SYNC_DIVERGED          SYNC_BRANCH_EXISTS
 MAKE_FORKABLE_BRANCH_EXISTS                   INTERNAL
 NOT_IMPLEMENTED
+RENAME_INVALID_NAME    RENAME_NOT_A_REPO      RENAME_SNAPSHOT_FAILED
+RENAME_APPLY_FAILED    RENAME_ROLLBACK_NOT_FOUND                RENAME_PLAN_STALE
+RENAME_LOCKFILE_REGEN_FAILED                  RENAME_DEEP_TS_FAILED
+RENAME_LANG_UNAVAILABLE                       STRING_LITERAL_REWRITTEN
+ENV_REQUIRES_REVIEW
 ```
+
+New in v1.1.0: the nine `RENAME_*` codes, plus `STRING_LITERAL_REWRITTEN` and `ENV_REQUIRES_REVIEW` emitted by the rename passes. See [Troubleshooting](../troubleshooting/) for per-code recovery guidance.
 
 The CLI exits with code 1 on `ok: false` and prints `ERROR <code>: <message>` (plus `hint:` if present) to stderr. The MCP layer maps `ok: false` to `{ isError: true, content: [{ type: "text", text: <json> }] }`.
 
@@ -179,7 +189,7 @@ READMEs (English master + seven translations) can't `import` JSON, so the lines 
 
 ```html
 <!-- FORKABLE_COUNTS_START -->
-## The nineteen tools
+## The twenty-two tools
 <!-- FORKABLE_COUNTS_END -->
 ```
 

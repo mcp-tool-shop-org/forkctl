@@ -8,7 +8,7 @@ sidebar:
 > Forking a GitHub repo is one click. Adopting it — picking fork vs template, dealing with org policy, waiting for async creation, wiring upstream sync, making the result actually runnable — is everything else. **Forkable owns the everything-else.**
 
 <!-- FORKABLE_COUNTS_START -->
-forkable is an MCP server **and** a CLI. The same nineteen tools are exposed through both surfaces, sharing one schema-validated, audit-logged dispatch boundary.
+forkable is an MCP server **and** a CLI. The same twenty-two tools are exposed through both surfaces, sharing one schema-validated, audit-logged dispatch boundary.
 <!-- FORKABLE_COUNTS_END -->
 
 ## When to reach for forkable
@@ -19,7 +19,7 @@ forkable is an MCP server **and** a CLI. The same nineteen tools are exposed thr
 - You want to **maintain a fleet of forks** without writing a custom GitHub bot.
 - You're a maintainer who wants to **make your repo more adoptable** for everyone else.
 
-## The six layers
+## The seven layers
 
 | Layer | What it owns |
 |---|---|
@@ -29,6 +29,7 @@ forkable is an MCP server **and** a CLI. The same nineteen tools are exposed thr
 | **Sync** | Honest divergence diagnosis + PR-based fallback when fast-forward is impossible |
 | **Fleet** | List, health-check, batch-sync many forks at once |
 | **Receipts** | Append-only SQLite audit log + machine-readable operation receipts |
+| **Rename** *(new in v1.1.0)* | AST-aware polyglot rename — identity, symbols, textual surfaces, lockfiles. See [Rename](./rename/). |
 
 ## Two surfaces, one product
 
@@ -58,4 +59,5 @@ npx @mcptoolshop/forkable sync myhandle/my-fork
 - Want every knob? [Configuration](../configuration/).
 - Want to look up a specific tool? [Reference](../reference/).
 - Want to know how it's wired internally? [Architecture](./architecture/).
+- Renaming a repo you just adopted? [Rename](./rename/) — new in v1.1.0.
 - Worried about secrets and force-pushes? [Security](../security/) explicitly states what forkable will and won't do.

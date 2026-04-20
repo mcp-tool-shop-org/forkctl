@@ -1,8 +1,8 @@
 {
-  "layers": 6,
-  "tools": 19,
-  "tests": 162,
-  "version": "1.0.0",
-  "hero": "Six layers, 19 tools",
+  "layers": 7,
+  "tools": 22,
+  "tests": 378,
+  "version": "1.1.0",
+  "hero": "Seven layers, 22 tools",
   "_note": "Single source of truth for count-ish facts about forkable. If any of these change, update them here and re-run the site build. Markdown READMEs mark their count lines with <!-- FORKABLE_COUNTS_START --> / <!-- FORKABLE_COUNTS_END --> so a future sync script can keep them in step."
 }

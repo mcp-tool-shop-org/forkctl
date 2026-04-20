@@ -1,6 +1,6 @@
 # Layer 7 — `forkable rename`
 
-> **Status:** DESIGN (not yet implemented). Target release: v1.1.0.
+> **Status:** SHIPPED in v1.1.0 (2026-04-20).
 > **Author:** mcp-tool-shop
 > **Date:** 2026-04-20
 
@@ -394,3 +394,31 @@ independently testable and landable. Tests ship with code (hard rule).
 *This design is intended to be implemented by the dogfood swarm's feature-pass
 agents. Each F-phase is self-contained and testable. Swarm agents should treat the
 hard-case matrix (§5) as a non-negotiable acceptance test.*
+
+---
+
+## 12. Implementation notes (v1.1.0)
+
+Shipped in v1.1.0 on 2026-04-20. The full architecture described above landed,
+with the following scope calls for the initial release:
+
+- **Polyglot symbol pass narrowed for v1.1.0.** The ast-grep pass ships with
+  JS, TS, TSX, HTML, and CSS bindings bundled. Other languages in the 26-lang
+  matrix resolve at runtime when the corresponding ast-grep language binding is
+  installed, else return `RENAME_LANG_UNAVAILABLE` (non-fatal — other passes
+  still run). The full polyglot bundle is a v1.2.0 target.
+- **Git history rewriting is deferred.** `--rewrite-history` remains a stub.
+  Targeted for v1.2+ behind an explicit opt-in that documents the
+  force-push / collaborator-impact tradeoffs.
+- **Monorepo `--scope` flag deferred.** v1.1.0 is whole-repo only. Scope-aware
+  rename is a v1.2.0 candidate.
+- **`--lsp` tier (multilspy) is future work.** Not wired in v1.1.0.
+- **Deep TS pass auto-enables** when `tsconfig.json` is detected and
+  `ts-morph` resolves. Opt out via `--no-deep-ts`. Failures surface as
+  `RENAME_DEEP_TS_FAILED` without aborting the rest of the apply.
+- **String-literal rewrites** emit a `STRING_LITERAL_REWRITTEN` warning in the
+  plan; `.env*` files require human review via `ENV_REQUIRES_REVIEW`.
+
+See `CHANGELOG.md` v1.1.0 for the full change set and the handbook's
+[rename page](../site/src/content/docs/handbook/rename.md) for the user-facing
+walkthrough.

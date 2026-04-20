@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { TOOLS, findTool } from "../src/tools/registry.js";
 
 describe("tool registry", () => {
-  it("has exactly 19 tools", () => {
-    expect(TOOLS).toHaveLength(19);
+  it("has exactly 22 tools (6 layers + rename layer 7)", () => {
+    expect(TOOLS).toHaveLength(22);
   });
 
   it("every tool has a unique, forkable_-prefixed name", () => {

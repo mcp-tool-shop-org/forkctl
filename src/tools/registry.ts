@@ -17,6 +17,9 @@ import { fleetHealthTool } from "./fleet-health.js";
 import { batchSyncTool } from "./batch-sync.js";
 import { receiptTool } from "./receipt.js";
 import { auditLogTool } from "./audit-log.js";
+import { renamePlanTool } from "./rename-plan.js";
+import { renameApplyTool } from "./rename-apply.js";
+import { renameRollbackTool } from "./rename-rollback.js";
 import type { ToolDescriptor } from "./types.js";
 
 /**
@@ -49,6 +52,10 @@ export const TOOLS: ToolDescriptor<unknown, unknown>[] = [
   // Receipts
   receiptTool as ToolDescriptor<unknown, unknown>,
   auditLogTool as ToolDescriptor<unknown, unknown>,
+  // Rename (L7)
+  renamePlanTool as ToolDescriptor<unknown, unknown>,
+  renameApplyTool as ToolDescriptor<unknown, unknown>,
+  renameRollbackTool as ToolDescriptor<unknown, unknown>,
 ];
 
 export function findTool(name: string): ToolDescriptor<unknown, unknown> | undefined {

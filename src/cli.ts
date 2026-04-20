@@ -16,8 +16,17 @@ import { VERSION } from "./index.js";
  * The MCP subcommand starts the MCP server (same binary).
  */
 
-function makeContext(): ToolContext {
-  const octokit = buildOctokit();
+function makeContext(toolName?: string): ToolContext {
+  // Rename tools (L7) don't make any GitHub API calls — don't require a
+  // token to run them. Build a lazy proxy instead that throws if misused.
+  const renameOnly = toolName !== undefined && toolName.startsWith("forkable_rename_");
+  const octokit = renameOnly
+    ? (new Proxy({}, {
+        get() {
+          throw new Error("rename tools must not use octokit");
+        },
+      }) as unknown as ReturnType<typeof buildOctokit>)
+    : buildOctokit();
   const db = openState();
   const operations = new Operations(db);
   return { octokit, db, operations };
@@ -41,7 +50,7 @@ async function run<I>(toolName: string, input: I, opts: { json?: boolean }): Pro
     process.stderr.write(`Unknown tool: ${toolName}\n`);
     process.exit(2);
   }
-  const ctx = makeContext();
+  const ctx = makeContext(toolName);
   const result = await dispatch(tool, input, ctx);
   outputResult(result, opts);
 }
@@ -298,6 +307,63 @@ program
     if (opts.operationId) input.operationId = opts.operationId;
     if (opts.ok !== undefined) input.ok = opts.ok === "true";
     await run("forkable_audit_log", input, opts);
+  });
+
+// ---- Rename (L7) ----------------------------------------------------------
+const renameCmd = program
+  .command("rename")
+  .description("AST-aware polyglot rename for fork rebranding (plan / apply / rollback)");
+
+renameCmd
+  .command("plan <path>")
+  .description("Build a read-only rename plan and write .forkable/rename-plan.{json,diff}")
+  .requiredOption("--from <name>", "source canonical name (e.g. forkable)")
+  .requiredOption("--to <name>", "target canonical name (e.g. splitshift)")
+  .option("--layers <list>", "comma-separated subset of identity,symbols,deep-ts,textual,post")
+  .option("--exclude <globs...>", "additional glob patterns to skip")
+  .option("--lockfile-strategy <strategy>", "regenerate | skip", "regenerate")
+  .option("--preserve-comments", "skip comment rewrites in source code", false)
+  .option("--deep-ts", "force-enable ts-morph deep TS pass", false)
+  .option("--no-deep-ts", "force-disable ts-morph deep TS pass")
+  .option("--json", "raw JSON output")
+  .action(async (repoPath, opts) => {
+    const input: Record<string, unknown> = {
+      path: repoPath,
+      from: opts.from,
+      to: opts.to,
+      lockfileStrategy: opts.lockfileStrategy,
+      preserveComments: !!opts.preserveComments,
+    };
+    if (opts.layers) input.layers = String(opts.layers).split(",").map((s) => s.trim()).filter(Boolean);
+    if (opts.exclude) input.exclude = Array.isArray(opts.exclude) ? opts.exclude : [opts.exclude];
+    if (opts.deepTs !== undefined) input.deepTs = !!opts.deepTs;
+    await run("forkable_rename_plan", input, opts);
+  });
+
+renameCmd
+  .command("apply <path>")
+  .description("Apply a rename plan (snapshot → identity → symbols → textual → post)")
+  .requiredOption("--plan <plan>", "path to rename-plan.json produced by `plan`")
+  .option("--no-verify", "skip the post-rename verify hook")
+  .option("--json", "raw JSON output")
+  .action(async (repoPath, opts) => {
+    const input: Record<string, unknown> = {
+      path: repoPath,
+      plan: opts.plan,
+      verify: opts.verify !== false,
+    };
+    await run("forkable_rename_apply", input, opts);
+  });
+
+renameCmd
+  .command("rollback <path>")
+  .description("Restore the repo from the latest rename snapshot")
+  .option("--snapshot-id <id>", "specific snapshot id (defaults to most recent)")
+  .option("--json", "raw JSON output")
+  .action(async (repoPath, opts) => {
+    const input: Record<string, unknown> = { path: repoPath };
+    if (opts.snapshotId) input.snapshotId = opts.snapshotId;
+    await run("forkable_rename_rollback", input, opts);
   });
 
 // ---- MCP server launcher --------------------------------------------------

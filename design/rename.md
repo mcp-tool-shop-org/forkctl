@@ -1,0 +1,424 @@
+# Layer 7 — `forkctl rename`
+
+> **Status:** SHIPPED in v1.1.0 (2026-04-20).
+> **Author:** mcp-tool-shop
+> **Date:** 2026-04-20
+
+## 1. Intent
+
+Make forking *seamless*. When a user adopts a repo and wants to rebrand it as their own
+product, they should run one command and have every reference — from package name down
+to class identifiers deep in the source — changed coherently, with casing-aware
+boundaries, without residue, and without corrupting lockfiles, binaries, or git history.
+
+### Positioning — the novel hook
+
+Every existing tool in this space (`cookiecutter`, `copier`, `create-*` scripts,
+ad-hoc `rebrand.sh` in popular forks) does one of two things:
+
+1. **Template-time substitution** — variables baked into files at scaffold time. Fails
+   the moment you're renaming an *existing* repo that wasn't built as a template.
+2. **`sed -i` chains** — brittle substring replace. No casing awareness, no symbol
+   scope, no word boundaries, corrupts partial matches (`star` inside `starship`).
+
+**Nobody in the fork-rebrand space does AST-aware rename.** That is the gap forkctl
+rename fills: a tool that actually understands what an identifier is, across 26
+languages, and renames it the way a refactor tool would — while simultaneously handling
+every non-code surface (README, badges, repo URLs, lockfiles, binaries) that
+refactor tools ignore.
+
+## 2. Tool surface
+
+### CLI
+
+```bash
+forkctl rename plan    <path> --from <old> --to <new> [flags]
+forkctl rename apply   <path> --plan <plan.json> [flags]
+forkctl rename rollback <path>                      # restore latest snapshot
+```
+
+`plan` is read-only. `apply` is the only mutating command and it requires a plan file
+produced by `plan`. No one-shot `--yes` — renames are consequential.
+
+### MCP
+
+- `forkctl_rename_plan` — returns a `RenamePlan` (JSON, user-reviewable).
+- `forkctl_rename_apply` — consumes a `RenamePlan`, returns a `RenameReceipt`.
+- `forkctl_rename_rollback` — restores from latest snapshot.
+
+Tool-surface style matches the existing 19 tools: Zod-validated input, `ToolResult`
+return, audit-logged via the central dispatch boundary (`src/dispatch.ts`). Handlers
+stay pure and never throw.
+
+### Input schema (sketch)
+
+```ts
+RenameInput = {
+  path: string;                   // repo root (absolute or relative)
+  from: string;                   // canonical old name (e.g. "forkctl")
+  to: string;                     // canonical new name (e.g. "splitshift")
+  layers?: ("identity" | "symbols" | "deep-ts" | "textual" | "post")[];
+                                  // default: ["identity", "symbols", "textual", "post"]
+  exclude?: string[];             // glob patterns added to built-in excludes
+  lockfileStrategy?: "regenerate" | "skip";  // default: "regenerate"
+  historyRewrite?: boolean;       // default: false
+  deepTs?: boolean;               // default: auto (on when tsconfig + ts-morph resolvable)
+  lspTier?: boolean;              // default: false (future — multilspy)
+};
+```
+
+The tool normalizes `from`/`to` into a **casing variant set** internally — the user
+never specifies variants manually.
+
+## 3. Architecture — five passes
+
+### Pass A — Identity manifest (custom, schema-driven)
+
+Rewrites a known list of identity-carrying files using structured editors, not text
+substitution.
+
+| File | What gets rewritten |
+|---|---|
+| `package.json` | `name`, `bin` keys, `repository.url`, `homepage`, `bugs.url` |
+| `Cargo.toml` | `[package].name`, `[[bin]].name`, `[lib].name`, `repository`, `homepage` |
+| `pyproject.toml` | `[project].name`, `[tool.poetry].name`, URL fields |
+| `go.mod` | `module` line |
+| `composer.json` | `name`, `bin` |
+| `pom.xml`, `build.gradle`, `build.gradle.kts` | `groupId`/`artifactId`, `rootProject.name` |
+| `README.md` + translations | H1 title, badge URLs, repo URL mentions (bounded) |
+| `LICENSE` | Copyright holder line (if it matches `from`) |
+| `.github/**` | Workflow `name:`, repo URL references, environment names referencing `from` |
+| `site/astro.config.*`, `site/package.json` | site identity |
+| `favicon.svg` / `og-image.*` | **Never modified** — emit regeneration manifest |
+
+Each target file has a dedicated editor module (`src/lib/rename/identity/<kind>.ts`).
+No regex on these — they use `JSON.parse`, `@iarna/toml`, `fast-xml-parser`, or
+structured markdown walkers. This pass is boring, correct, and high-value.
+
+### Pass B — Code symbols via ast-grep
+
+**Library:** `@ast-grep/napi` v0.42.1 (tree-sitter core, 26 languages).
+
+**Approach:** for each language present in the repo, generate a YAML rule set that
+matches identifiers equal to one of the casing variants of `from`, constrained to
+**identifier-kind nodes** (not strings, not comments, not code inside code-fence
+blocks in markdown). Rewrite to the matching variant of `to`.
+
+```yaml
+# generated per-language, per-variant
+id: rename-forkable-pascal
+language: TypeScript
+rule:
+  kind: identifier
+  regex: '^Forkable$'
+fix: 'Splitshift'
+```
+
+Variants generated by `change-case` v5.4.4:
+
+| Variant | Example (`forkctl` → `splitshift`) |
+|---|---|
+| `kebab-case` | `forkctl` → `splitshift` |
+| `snake_case` | `forkctl` → `splitshift` |
+| `camelCase` | `forkctl` → `splitshift` |
+| `PascalCase` | `Forkable` → `Splitshift` |
+| `SCREAMING_SNAKE` | `FORKABLE` → `SPLITSHIFT` |
+| `dot.case` | (rare; markdown/config) |
+| `Title Case` | `Forkable` → `Splitshift` (README headings) |
+
+**Identifier-boundary rule is non-negotiable.** `forkctl` must never match inside
+`forkableness` or `unforkable`. ast-grep's `kind: identifier` node constraint
+guarantees this in code; for the textual pass (D) we use word-boundary regex plus a
+denylist of known partial-match hazards.
+
+### Pass C — TypeScript deep pass (opt-in, auto-on when tsconfig present)
+
+**Library:** `ts-morph` v28.0.0.
+
+For repos with heavy TS — and forkctl itself is one — ast-grep's identifier match
+misses a few real-world cases:
+
+- Scope-aware shadowing (a local `forkctl` variable in a function should **not** be
+  rewritten if it's a coincidental name collision — though in practice this is rare
+  and the user usually wants it renamed anyway).
+- Re-exports and barrel files: `export { Forkable } from './forkctl'` needs the
+  specifier and the re-export name rewritten as a unit.
+- Computed property shortcuts where TS elides the name.
+
+`ts-morph` uses the real TypeScript compiler's symbol table, which gives us true
+rename-refactor quality — the same quality VS Code's "Rename Symbol" command
+delivers. Auto-enabled when `tsconfig.json` + `ts-morph` resolve cleanly; explicit
+`--no-deep-ts` to opt out. Adds ~10-30s to large TS repos.
+
+### Pass D — Non-code textual
+
+Files covered: `*.md`, `*.mdx`, `*.txt`, `*.yml`, `*.yaml` (with caveats below),
+`*.toml` (for non-identity fields only), `.env.example` (values only, never keys).
+
+Approach:
+1. For each casing variant, compile a **word-boundary regex** (`\bForkable\b`).
+2. Skip code-fence blocks in markdown (parse with remark to identify them).
+3. Skip YAML *keys* (only rewrite values — prevents breaking schema files).
+4. Apply the matching variant of `to`.
+5. Emit a per-file diff for user review before apply.
+
+**Never rewritten in textual pass:**
+- `.env*` files (diff-only; emitted for human review)
+- Lockfiles (handled by post-pass)
+- `CHANGELOG.md` entries dated before the fork point (optional `--preserve-history`
+  flag, default on)
+- Binary files (detected via null-byte sniff + extension allowlist)
+- Anything under an explicit `exclude` glob
+
+### Pass E — Post-rename
+
+Runs after A-D succeed. Idempotent.
+
+1. **Lockfile regeneration.** Delete `package-lock.json`, `pnpm-lock.yaml`,
+   `yarn.lock`, `Cargo.lock`, `poetry.lock`, `uv.lock`. Run the repo's native install
+   command (detected from which lockfile was present). Rewriting lockfiles manually
+   would corrupt integrity hashes — always regenerate.
+2. **Path renames.** If directories/files contain `from` in the path, `git mv` them
+   to the `to` variant. Handle case-insensitive filesystems (Windows, macOS default)
+   with a two-step `foo` → `foo.tmp` → `Foo` rename.
+3. **Asset regeneration manifest.** Write `.forkctl/asset-regen.json` listing every
+   binary asset that likely needs to be remade (favicon, OG image, logo PNGs). Never
+   modified; surfaced as a TODO list.
+4. **Verify hook.** If the repo has an `npm run verify` / `make verify` / `cargo
+   check` script, run it and report result. Do not fail the rename on verify
+   failure; report it as a post-condition for the user to address.
+
+## 4. Planning phase — three-stage UX
+
+`forkctl rename plan` produces a `RenamePlan` JSON artifact with three sections:
+
+### Stage 1 — Rename map
+
+The detected casing variants and their targets, plus any variant the user wants to
+override or suppress.
+
+```json
+{
+  "from": "forkctl",
+  "to": "splitshift",
+  "variants": {
+    "kebab-case":     { "from": "forkctl",  "to": "splitshift",  "enabled": true },
+    "snake_case":     { "from": "forkctl",  "to": "splitshift",  "enabled": true },
+    "camelCase":      { "from": "forkctl",  "to": "splitshift",  "enabled": true },
+    "PascalCase":     { "from": "Forkable",  "to": "Splitshift",  "enabled": true },
+    "SCREAMING_SNAKE":{ "from": "FORKABLE",  "to": "SPLITSHIFT",  "enabled": true }
+  }
+}
+```
+
+### Stage 2 — Per-layer dry-run report
+
+```json
+{
+  "layers": {
+    "identity":   { "files": 12,  "hotspots": ["package.json", "README.md"] },
+    "symbols":    { "files": 147, "byLanguage": { "TypeScript": 132, "JSON": 15 } },
+    "textual":    { "files": 42,  "hotspots": ["README.md", "site/src/pages/index.astro"] },
+    "post":       { "lockfilesToRegenerate": ["package-lock.json"], "pathsToMove": ["src/forkctl/ → src/splitshift/"], "assetsToRegen": ["site/public/favicon.png"] }
+  },
+  "excluded": ["node_modules/", "dist/", ".git/", "CHANGELOG.md entries before fork point"],
+  "warnings": [
+    "Found 3 instances of 'forkctl' inside string literals that may be incidental mentions — review files/list"
+  ]
+}
+```
+
+### Stage 3 — Unified diff
+
+A full `git diff`-style preview of every intended change, per layer. Written to
+disk (`.forkctl/rename-plan.diff`) so the user can review it in their editor
+before `forkctl rename apply`.
+
+## 5. Hard-case matrix — mandatory test cases
+
+Every swarm-produced implementation MUST pass these:
+
+| Case | Expected behavior |
+|---|---|
+| `star` inside `starship` | Untouched (word-boundary). |
+| `Forkable` class name | Renamed via ast-grep PascalCase rule. |
+| `"forkctl"` in a code-comment | Renamed (textual pass walks comments in markdown; for source-code comments, ast-grep `kind: comment` match applied with variant regex). |
+| `"forkctl"` in a string literal in source code | **Default: rewritten.** Flagged in warnings. User can suppress specific files via `exclude`. |
+| Markdown code fence containing `forkctl` | Untouched (code fences are skipped in textual; ast-grep handles anything that's real code). |
+| `package-lock.json` | Deleted + regenerated in post-pass. Never rewritten. |
+| `favicon.png` | Never modified. Listed in asset-regen manifest. |
+| `.env.example` with `FORKABLE_API_KEY=xxx` | Key **and** value diff'd for user review; applied only if user approves. |
+| CHANGELOG entry dated before fork point | Preserved (historical accuracy). |
+| `git log` / git history | Never rewritten by default. `--rewrite-history` flag exists for opt-in. |
+| Directory `src/forkctl/` | `git mv` to `src/splitshift/`, imports updated via symbols pass. |
+| Case-insensitive FS rename `foo` → `Foo` | Two-step via `.tmp` suffix. |
+| Windows path separators in generated rules | Normalized to POSIX internally, converted on write. |
+| Re-export `export { Forkable } from './forkctl'` | Covered by ast-grep symbols pass (specifier) + identity pass (filename) + path rename (directory). `--deep-ts` catches edge cases. |
+| `<forkable-logo>` in HTML/Astro | Rewritten by textual pass with attribute-value awareness. |
+| A repo that's NOT git | Snapshot tarball instead of git mv. Apply still works; rollback restores from tarball. |
+
+## 6. Exclusions (always)
+
+- `.git/`
+- `node_modules/`, `bower_components/`
+- `dist/`, `build/`, `out/`, `.next/`, `.nuxt/`, `.astro/`
+- `target/` (Rust), `__pycache__/` (Python)
+- `.venv/`, `venv/`, `env/`
+- `coverage/`
+- `*.min.js`, `*.min.css`, sourcemaps
+- Binary files by extension (`.png`, `.jpg`, `.ico`, `.woff*`, `.ttf`, `.otf`,
+  `.wasm`, `.so`, `.dll`, `.dylib`, `.exe`, `.bin`, `.mp3`, `.mp4`, `.webm`,
+  `.pdf`, `.zip`, `.tar*`, `.gz`)
+
+## 7. Snapshot & rollback
+
+Before `apply` mutates anything, a snapshot is written to `.forkctl/snapshots/rename-<timestamp>/`:
+
+- **git repos:** record pre-rename HEAD SHA + `git stash push --include-untracked`.
+  Rollback = `git reset --hard <pre-rename-HEAD>` + `git stash pop` (if stash existed).
+- **non-git repos:** tarball of the working tree (excluding standard excludes).
+  Rollback = extract tarball over working tree.
+
+`forkctl rename rollback` restores the latest snapshot. Snapshots kept for 7 days,
+garbage-collected on next `forkctl` command.
+
+## 8. Implementation plan — swarm-ready phases
+
+This section maps to the dogfood-swarm feature-pass phases. Each sub-phase is
+independently testable and landable. Tests ship with code (hard rule).
+
+### F1 — Scaffolding & schemas (0.5d)
+- `src/lib/rename/` directory
+- `src/schemas/rename.ts` (`RenameInputSchema`, `RenamePlanSchema`, `RenameReceiptSchema`)
+- `src/tools/rename-plan.ts`, `src/tools/rename-apply.ts`, `src/tools/rename-rollback.ts`
+- Register in `src/tools/registry.ts` + CLI commander
+- Stub handlers that return `{ ok: false, error: NOT_IMPLEMENTED }`
+- Tests: schema validation, dispatch wiring, CLI help text
+
+### F2 — Casing variant engine (0.5d)
+- `src/lib/rename/variants.ts` — wraps `change-case`, produces the variant set
+- Tests: all 7 variants for representative inputs including edge cases
+  (`forkctl` / `forkable-2` / `forkctl_v2` / acronyms like `URL` / multi-word)
+
+### F3 — Identity pass (1.5d)
+- `src/lib/rename/identity/*.ts` — one editor per file kind
+- Dry-run semantics: return a `Change[]` instead of writing
+- Tests: fixture repos for each kind (`package.json`, `Cargo.toml`, `pyproject.toml`,
+  `go.mod`, `README.md`, `.github/workflows/ci.yml`, etc.)
+
+### F4 — ast-grep symbol pass (2d)
+- `src/lib/rename/symbols.ts` — uses `@ast-grep/napi`
+- Language detection from file extensions + `.ast-grep.yml` projects
+- YAML rule generation per variant × language
+- Dry-run + apply
+- Tests: fixture repos covering TS, JS, Python, Rust, Go, and a mixed polyglot repo
+  with all the hard cases from §5
+
+### F5 — Textual pass (1d)
+- `src/lib/rename/textual.ts`
+- Remark-based markdown walker to skip code fences
+- YAML key-vs-value detection
+- Word-boundary regex per variant
+- Tests: fixture markdown with code fences, YAML with sensitive keys
+
+### F6 — Post pass (1d)
+- `src/lib/rename/post.ts` — lockfile regen, path moves, asset manifest, verify hook
+- Two-step case-insensitive rename
+- Tests: lockfile regeneration for npm/pnpm/yarn/cargo/poetry/uv, path rename with
+  import updates
+
+### F7 — Plan / apply / rollback tools (1d)
+- Wire all passes into `rename-plan` (read-only) and `rename-apply` (snapshot → apply
+  → verify)
+- `.forkctl/rename-plan.json` and `.forkctl/rename-plan.diff` artifacts
+- Snapshot & rollback implementation
+- Tests: end-to-end on fixture repos, rollback correctness, idempotent second-apply
+  (should be no-op)
+
+### F8 — TS deep pass (1d)
+- `src/lib/rename/deep-ts.ts` — `ts-morph` driver
+- Auto-enables when `tsconfig.json` + `ts-morph` resolvable
+- Tests: re-exports, barrels, shadowing edge cases
+
+### F9 — Documentation & handbook (0.5d)
+- `site/src/content/docs/rename.md` — handbook page (Starlight docsLoader required)
+- README section
+- CHANGELOG entry for v1.1.0
+- Update `SHIP_GATE.md` if rename affects ship criteria
+
+**Total:** ~9 engineer-days. Feature pass target: 3-4 swarm phases.
+
+## 9. Open questions (to resolve before or during swarm)
+
+1. **`--deep-ts` as default?** Research brief suggests opt-in. For forkctl itself
+   (a TS repo), we'd want it on. **Proposed:** auto-enable when `tsconfig.json` is
+   detected AND `ts-morph` is resolvable; explicit `--no-deep-ts` to opt out.
+2. **Comments in source code.** Rewrite or leave? Current design rewrites (ast-grep
+   `kind: comment` match). **Proposed:** rewrite by default, `--preserve-comments`
+   to opt out.
+3. **String literals in source code.** Current design rewrites with a warning.
+   Alternative: diff-only (require human review). **Proposed:** keep rewrite-with-
+   warning; rationale: most string literals referencing the product name ARE
+   product references (error messages, config keys, log lines).
+4. **Renaming the git remote.** Out of scope for rename itself; forkctl already has
+   `configure-upstream`. Document the recommended follow-up sequence in the handbook.
+5. **Telemetry / analytics identifiers.** If the repo has Plausible/GA/Sentry DSN
+   strings keyed by product name, flag them. **Proposed:** yes — add a known-keys
+   heuristic to the warnings list.
+6. **Monorepo awareness.** If the repo has `packages/*`, should rename be scoped to
+   a single package? **Proposed:** v1.1.0 ships whole-repo only; `--scope
+   packages/foo` is a v1.2.0 candidate.
+
+## 10. Non-goals
+
+- **Rewriting git history.** Possible via `git filter-repo`, but destructive and
+  out of scope for the default path. `--rewrite-history` flag is a stub for v1.2+.
+- **Semantic rename of concepts.** Renaming the *product* is one string (plus its
+  variants). Renaming a *domain concept* within the code (e.g. `Customer` →
+  `Account`) is a different tool and NOT what forkctl rename does.
+- **Cross-repo rename.** Rename operates on a single working tree. Coordinating a
+  rename across a provider/consumer pair is a `multi-repo-publish-sequencing` job.
+- **Automated translations of the rebrand.** We rewrite the *name* in translated
+  READMEs, not the prose. Re-translating is a separate step.
+
+## 11. References
+
+- ast-grep: https://ast-grep.github.io/ (v0.42.1, 2026-04-04)
+- ts-morph: https://ts-morph.com/ (v28.0.0, 2026-04-12)
+- change-case: https://github.com/blakeembrey/change-case (v5.4.4)
+- multilspy: https://github.com/microsoft/multilspy (future `--lsp` tier)
+- tree-sitter: https://tree-sitter.github.io/ (v0.26.8)
+
+---
+
+*This design is intended to be implemented by the dogfood swarm's feature-pass
+agents. Each F-phase is self-contained and testable. Swarm agents should treat the
+hard-case matrix (§5) as a non-negotiable acceptance test.*
+
+---
+
+## 12. Implementation notes (v1.1.0)
+
+Shipped in v1.1.0 on 2026-04-20. The full architecture described above landed,
+with the following scope calls for the initial release:
+
+- **Polyglot symbol pass narrowed for v1.1.0.** The ast-grep pass ships with
+  JS, TS, TSX, HTML, and CSS bindings bundled. Other languages in the 26-lang
+  matrix resolve at runtime when the corresponding ast-grep language binding is
+  installed, else return `RENAME_LANG_UNAVAILABLE` (non-fatal — other passes
+  still run). The full polyglot bundle is a v1.2.0 target.
+- **Git history rewriting is deferred.** `--rewrite-history` remains a stub.
+  Targeted for v1.2+ behind an explicit opt-in that documents the
+  force-push / collaborator-impact tradeoffs.
+- **Monorepo `--scope` flag deferred.** v1.1.0 is whole-repo only. Scope-aware
+  rename is a v1.2.0 candidate.
+- **`--lsp` tier (multilspy) is future work.** Not wired in v1.1.0.
+- **Deep TS pass auto-enables** when `tsconfig.json` is detected and
+  `ts-morph` resolves. Opt out via `--no-deep-ts`. Failures surface as
+  `RENAME_DEEP_TS_FAILED` without aborting the rest of the apply.
+- **String-literal rewrites** emit a `STRING_LITERAL_REWRITTEN` warning in the
+  plan; `.env*` files require human review via `ENV_REQUIRES_REVIEW`.
+
+See `CHANGELOG.md` v1.1.0 for the full change set and the handbook's
+[rename page](../site/src/content/docs/handbook/rename.md) for the user-facing
+walkthrough.

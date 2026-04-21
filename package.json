@@ -1,0 +1,75 @@
+{
+  "name": "@mcptoolshop/forkctl",
+  "version": "2.0.0",
+  "description": "Adoption control plane for GitHub repos. Assess, choose path, fork or template, bootstrap, sync, rename. MCP server + CLI.",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "github",
+    "fork",
+    "template",
+    "repository",
+    "adoption",
+    "cli"
+  ],
+  "license": "MIT",
+  "author": "mcp-tool-shop <64996768+mcp-tool-shop@users.noreply.github.com>",
+  "homepage": "https://github.com/mcp-tool-shop-org/forkctl",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mcp-tool-shop-org/forkctl.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mcp-tool-shop-org/forkctl/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "forkctl": "dist/cli.js",
+    "forkctl-mcp": "dist/server.js"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "SECURITY.md",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "verify": "npm run typecheck && npm run test && npm run build",
+    "start:server": "node dist/server.js",
+    "start:cli": "node dist/cli.js",
+    "prepublishOnly": "npm run verify"
+  },
+  "dependencies": {
+    "@ast-grep/napi": "^0.42.1",
+    "@iarna/toml": "^2.2.5",
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@octokit/plugin-retry": "^8.1.0",
+    "@octokit/plugin-throttling": "^11.0.3",
+    "@octokit/request-error": "^6.1.0",
+    "@octokit/rest": "^21.0.0",
+    "better-sqlite3": "^11.3.0",
+    "change-case": "^5.4.4",
+    "commander": "^12.1.0",
+    "env-paths": "^3.0.0",
+    "ts-morph": "^28.0.0",
+    "zod": "^3.23.8",
+    "zod-to-json-schema": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/node": "^20.16.0",
+    "typescript": "^5.6.0",
+    "vitest": "^4.1.4"
+  }
+}

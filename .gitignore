@@ -1,0 +1,17 @@
+node_modules/
+dist/
+coverage/
+*.log
+.DS_Store
+.env
+.env.local
+.vscode/
+.idea/
+*.tsbuildinfo
+forkctl-state.db
+forkctl-state.db-journal
+.forkctl/
+site/.astro/
+site/dist/
+site/node_modules/
+.polyglot-cache.json

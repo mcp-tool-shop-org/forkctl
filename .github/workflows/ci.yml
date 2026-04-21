@@ -1,0 +1,187 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig.json"
+      - "vitest.config.ts"
+      - "src/**"
+      - "tests/**"
+      - ".github/workflows/**"
+  pull_request:
+    paths:
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig.json"
+      - "vitest.config.ts"
+      - "src/**"
+      - "tests/**"
+      - ".github/workflows/**"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify (typecheck, test, build)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify better-sqlite3 native build
+        shell: bash
+        run: |
+          if ! node -e "require('better-sqlite3')" 2>/tmp/sqlite3-err.log; then
+            echo "::error::better-sqlite3 failed to load. This usually means the prebuilt native binary did not resolve for this Node/OS combination."
+            echo ""
+            echo "Diagnostic info:"
+            echo "  Node version: $(node --version)"
+            echo "  npm version:  $(npm --version)"
+            echo "  OS:           $(uname -a)"
+            echo "  Arch:         $(uname -m)"
+            echo ""
+            echo "Error output:"
+            cat /tmp/sqlite3-err.log
+            echo ""
+            echo "Troubleshooting: https://github.com/WiseLibs/better-sqlite3/blob/master/docs/troubleshooting.md"
+            exit 1
+          fi
+          echo "better-sqlite3 loaded successfully."
+
+      - name: Supply-chain audit (npm audit, high severity)
+        run: npm audit --audit-level=high
+        continue-on-error: false
+
+      - name: Verify TypeScript types
+        run: npm run typecheck
+
+      - name: Run test suite
+        run: npm test
+
+      - name: Build distributable output
+        run: npm run build
+
+      - name: Upload failure logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-failure-logs-${{ github.run_id }}
+          path: |
+            npm-debug.log*
+            /tmp/sqlite3-err.log
+            dist/**
+          retention-days: 7
+          if-no-files-found: ignore
+
+  package-verify:
+    name: Package verify (tarball contents + install resolves)
+    runs-on: ubuntu-latest
+    needs: verify
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build distributable output
+        run: npm run build
+
+      - name: Inspect tarball via npm pack --dry-run
+        id: pack
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm pack --dry-run --json > pack.json
+          echo "Tarball manifest captured to pack.json"
+          node -e "const p=require('./pack.json');console.log('Files in tarball:');for (const f of p[0].files){console.log('  '+f.path)}"
+
+      - name: Assert no forbidden paths in tarball
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'EOF'
+          const pack = require('./pack.json');
+          const files = pack[0].files.map(f => f.path);
+          const forbiddenPrefixes = ['design/', 'SHIP_GATE', 'tests/', '.github/', 'site/', 'node_modules/'];
+          const violations = [];
+          for (const f of files) {
+            for (const p of forbiddenPrefixes) {
+              if (f.startsWith(p)) violations.push({ file: f, rule: p });
+            }
+          }
+          if (violations.length) {
+            console.error('::error::Forbidden files found in published tarball:');
+            for (const v of violations) console.error(`  ${v.file} (matches ${v.rule})`);
+            console.error('');
+            console.error('The "files" field in package.json should restrict the tarball to shippable artifacts only.');
+            process.exit(1);
+          }
+          console.log('Tarball contents clean: no forbidden paths present.');
+          EOF
+
+      - name: Assert required dist entry points are in tarball
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'EOF'
+          const pack = require('./pack.json');
+          const files = new Set(pack[0].files.map(f => f.path));
+          const required = ['dist/cli.js', 'dist/server.js', 'dist/index.js', 'dist/index.d.ts'];
+          const missing = required.filter(r => !files.has(r));
+          if (missing.length) {
+            console.error('::error::Required entry points missing from tarball:');
+            for (const m of missing) console.error(`  - ${m}`);
+            console.error('');
+            console.error('Check the build output in dist/ and the "files" field in package.json.');
+            process.exit(1);
+          }
+          console.log('All required entry points present in tarball.');
+          EOF
+
+      - name: Verify install resolves cleanly (npm install --dry-run)
+        shell: bash
+        run: |
+          set -euo pipefail
+          FRESH_DIR="$(mktemp -d)"
+          echo "Using fresh temp dir: $FRESH_DIR"
+          PKG="$(npm pack --silent --pack-destination "$FRESH_DIR")"
+          echo "Packed tarball: $FRESH_DIR/$PKG"
+          cd "$FRESH_DIR"
+          npm init -y >/dev/null
+          npm install --dry-run "./$PKG"
+          echo "Install resolution check passed."
+
+      - name: Upload pack manifest on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-verify-logs-${{ github.run_id }}
+          path: |
+            pack.json
+          retention-days: 7
+          if-no-files-found: ignore

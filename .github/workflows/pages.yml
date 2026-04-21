@@ -1,0 +1,83 @@
+name: Deploy site to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    name: Build site (Starlight)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Guard — skip if no site/ directory
+        id: guard
+        shell: bash
+        run: |
+          if [ ! -d site ]; then
+            echo "::notice::No site/ directory, skipping Pages build"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Node.js 22
+        if: steps.guard.outputs.skip != 'true'
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: Install site dependencies
+        if: steps.guard.outputs.skip != 'true'
+        working-directory: site
+        run: npm ci
+
+      - name: Build site
+        if: steps.guard.outputs.skip != 'true'
+        working-directory: site
+        run: npm run build
+
+      - name: Upload Pages artifact
+        if: steps.guard.outputs.skip != 'true'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: site/dist
+
+      - name: Upload build logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pages-build-logs-${{ github.run_id }}
+          path: |
+            site/dist/**
+            site/.astro/**
+            npm-debug.log*
+          retention-days: 7
+          if-no-files-found: ignore
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy artifact to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

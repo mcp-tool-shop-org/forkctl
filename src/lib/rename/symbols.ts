@@ -11,7 +11,6 @@
 
 import { promises as fs } from "node:fs";
 import * as path from "node:path";
-type NapiLang = unknown;
 import type { RenameChange, RenameWarning, StringsMode } from "../../schemas/rename.js";
 import type { VariantSet } from "./variants.js";
 import { escapeRegex, rewriteIdentifierVariants } from "./variants.js";
@@ -23,6 +22,7 @@ async function getNapi(): Promise<typeof import("@ast-grep/napi") | undefined> {
   if (napi) return napi;
   try {
     napi = await import("@ast-grep/napi");
+    await registerDynamicLangs(napi);
     return napi;
   } catch {
     return undefined;
@@ -30,41 +30,83 @@ async function getNapi(): Promise<typeof import("@ast-grep/napi") | undefined> {
 }
 
 /**
- * ast-grep language enum tokens we actually ship in v1.1.0.
+ * ast-grep language coverage.
  *
- * The default `@ast-grep/napi` build ships tree-sitter bindings only for
- * JavaScript, TypeScript, Tsx, Html, and Css. The broader polyglot set
- * documented in the Bug 3 report (Python/Rust/Go/Java/Ruby/Php/CSharp/C/Cpp/
- * Swift/Kotlin/Scala/Lua) is bundled behind optional `@ast-grep/lang-*`
- * packages that we have NOT yet added as runtime dependencies — forkctl
- * v1.1.0 narrows the claim to the native set and emits a
- * `RENAME_LANG_UNAVAILABLE` warning when source files of an unsupported
- * language are encountered. Wider polyglot coverage is v1.2.0 work.
+ * Default `@ast-grep/napi` build ships bindings for JavaScript, TypeScript,
+ * Tsx, Html, Css only. The broader polyglot set (Python/Rust/Go/Java/Ruby/
+ * CSharp/Cpp/C/Bash/Yaml/Json) lives in optional `@ast-grep/lang-*` packages
+ * declared as optionalDependencies. When those resolve at module-load, we
+ * register them via `registerDynamicLanguage`. When they don't (user opted
+ * out of optional deps, package manager skipped, etc.), those languages fall
+ * through to the `RENAME_LANG_UNAVAILABLE` warning path.
  *
- * See design/rename.md §3 Pass B.
+ * After `registerDynamicLanguage`, parse() accepts either the Lang enum
+ * value (for built-in langs) OR the language name string (for dynamically
+ * registered langs). We always pass the string name for uniformity.
+ *
+ * See design/brand-mode.md Phase 5.
  */
-const LANG_MAP: Record<string, string> = {
-  TypeScript: "TypeScript",
-  JavaScript: "JavaScript",
-  Tsx: "Tsx",
-  Html: "Html",
-  Css: "Css",
-};
+const BUILTIN_LANGS = new Set(["TypeScript", "JavaScript", "Tsx", "Html", "Css"]);
 
-/** TypeScript/Tsx-specific kinds where class/interface/type-alias names live. */
-const TYPE_IDENTIFIER_LANGS = new Set(["TypeScript", "Tsx"]);
+/**
+ * Map of tree-sitter-lang package name → ast-grep Lang name. Keys must match
+ * the string walk.ts emits via `languageForExtension()`.
+ */
+const DYNAMIC_LANGS: Array<{ name: string; pkg: string }> = [
+  { name: "Python", pkg: "@ast-grep/lang-python" },
+  { name: "Rust", pkg: "@ast-grep/lang-rust" },
+  { name: "Go", pkg: "@ast-grep/lang-go" },
+  { name: "Java", pkg: "@ast-grep/lang-java" },
+  { name: "Ruby", pkg: "@ast-grep/lang-ruby" },
+  { name: "CSharp", pkg: "@ast-grep/lang-csharp" },
+  { name: "Cpp", pkg: "@ast-grep/lang-cpp" },
+  { name: "C", pkg: "@ast-grep/lang-c" },
+  { name: "Bash", pkg: "@ast-grep/lang-bash" },
+  { name: "Yaml", pkg: "@ast-grep/lang-yaml" },
+  { name: "Json", pkg: "@ast-grep/lang-json" },
+];
 
-function resolveLang(
+/** Langs where tree-sitter-grammar exposes a dedicated `type_identifier` kind. */
+const TYPE_IDENTIFIER_LANGS = new Set([
+  "TypeScript", "Tsx", "Rust", "Go", "Java", "CSharp", "Cpp", "C",
+]);
+
+/**
+ * Resolved lang names available in the current runtime. Populated on first
+ * call to `getNapi()` after dynamic registration. Both built-in and
+ * successfully-registered dynamic langs appear here.
+ */
+const RESOLVED_LANGS = new Set<string>(BUILTIN_LANGS);
+let dynamicRegistered = false;
+
+async function registerDynamicLangs(
   mod: typeof import("@ast-grep/napi"),
-  name: string,
-): NapiLang | undefined {
-  const key = LANG_MAP[name];
-  if (!key) return undefined;
-  const langs = (mod as unknown as { Lang?: Record<string, NapiLang> }).Lang;
-  if (langs && key in langs) {
-    return langs[key];
+): Promise<void> {
+  if (dynamicRegistered) return;
+  dynamicRegistered = true;
+  const registry: Record<string, unknown> = {};
+  for (const { name, pkg } of DYNAMIC_LANGS) {
+    try {
+      const loaded = await import(pkg);
+      const body = (loaded as { default?: unknown }).default ?? loaded;
+      registry[name] = body;
+    } catch {
+      // Optional dep not installed — fine, skip and leave RENAME_LANG_UNAVAILABLE
+      // to surface the gap to the user if they have files of that language.
+    }
   }
-  return undefined;
+  if (Object.keys(registry).length === 0) return;
+  try {
+    (mod as unknown as { registerDynamicLanguage: (r: Record<string, unknown>) => void })
+      .registerDynamicLanguage(registry);
+    for (const name of Object.keys(registry)) RESOLVED_LANGS.add(name);
+  } catch {
+    // Registration failed — leave RESOLVED_LANGS unchanged.
+  }
+}
+
+function resolveLang(name: string): string | undefined {
+  return RESOLVED_LANGS.has(name) ? name : undefined;
 }
 
 export interface SymbolsPassOptions {
@@ -140,7 +182,7 @@ export async function runSymbolsPass(opts: SymbolsPassOptions): Promise<SymbolsP
   const unavailableWarned = new Set<string>();
 
   for (const [langName, relPaths] of Object.entries(opts.byLanguage)) {
-    const lang = resolveLang(mod, langName);
+    const lang = resolveLang(langName);
     if (!lang) {
       // Language not supported in the shipped napi bindings. Emit one
       // aggregate warning per language listing the file count.
@@ -166,7 +208,7 @@ export async function runSymbolsPass(opts: SymbolsPassOptions): Promise<SymbolsP
         continue;
       }
       const sg = (mod as unknown as {
-        parse: (lang: NapiLang, src: string) => { root: () => { findAll: (rule: unknown) => { text: () => string; range: () => { start: { line: number; column: number }; end: { line: number; column: number } } }[] } };
+        parse: (lang: string, src: string) => { root: () => { findAll: (rule: unknown) => { text: () => string; range: () => { start: { line: number; column: number }; end: { line: number; column: number } } }[] } };
       });
       let root;
       try {

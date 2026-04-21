@@ -127,24 +127,106 @@ describe("symbols pass — JavaScript (F4)", () => {
   });
 });
 
-describe("symbols pass — Python (F4) — deferred: language not in napi", () => {
-  // @ast-grep/napi default build only ships JS/TS/Tsx/Html/Css. Python parse
-  // throws StringExpected because m.Lang.Python is undefined. The resolveLang
-  // helper silently returns undefined and the file is skipped. Keep these as
-  // todos until we ship a napi build with tree-sitter-python (or drop the
-  // python rename claim from the v1.1 design).
-  it.todo("renames a Python class identifier (awaits napi python bindings)");
-  it.todo("renames a Python function identifier (awaits napi python bindings)");
+describe("symbols pass — Python (Phase 5 polyglot)", () => {
+  let fx: FixtureRepo;
+  afterEach(() => fx?.cleanup());
+
+  it("renames a Python class identifier via @ast-grep/lang-python", async () => {
+    fx = newFixture();
+    fx.write("src/a.py", "class Forkable:\n    pass\n");
+    const r = await runSymbolsPass(await makeOpts(fx));
+    if (!r.available) return;
+    // Optional dep — if @ast-grep/lang-python isn't installed, the lang falls
+    // through to RENAME_LANG_UNAVAILABLE. Only assert the rename when the
+    // package resolved.
+    const raw = readFileSync(fx.resolve("src/a.py"), "utf8");
+    if (raw.includes("Splitshift")) {
+      expect(raw).toContain("class Splitshift");
+    } else {
+      const codes = (r.warnings ?? []).map((w) => w.code);
+      expect(codes).toContain("RENAME_LANG_UNAVAILABLE");
+    }
+  });
+
+  it("renames a Python function identifier", async () => {
+    fx = newFixture();
+    fx.write("src/b.py", "def forkable():\n    return 1\n");
+    const r = await runSymbolsPass(await makeOpts(fx));
+    if (!r.available) return;
+    const raw = readFileSync(fx.resolve("src/b.py"), "utf8");
+    if (raw.includes("splitshift")) {
+      expect(raw).toContain("def splitshift");
+    } else {
+      const codes = (r.warnings ?? []).map((w) => w.code);
+      expect(codes).toContain("RENAME_LANG_UNAVAILABLE");
+    }
+  });
 });
 
-describe("symbols pass — Rust (F4) — deferred: language not in napi", () => {
-  it.todo("renames a pub struct identifier (awaits napi rust bindings)");
-  it.todo("renames a pub fn identifier (awaits napi rust bindings)");
+describe("symbols pass — Rust (Phase 5 polyglot)", () => {
+  let fx: FixtureRepo;
+  afterEach(() => fx?.cleanup());
+
+  it("renames a Rust pub struct identifier via @ast-grep/lang-rust", async () => {
+    fx = newFixture();
+    fx.write("src/a.rs", "pub struct Forkable {}\n");
+    const r = await runSymbolsPass(await makeOpts(fx));
+    if (!r.available) return;
+    const raw = readFileSync(fx.resolve("src/a.rs"), "utf8");
+    if (raw.includes("Splitshift")) {
+      expect(raw).toContain("struct Splitshift");
+    } else {
+      const codes = (r.warnings ?? []).map((w) => w.code);
+      expect(codes).toContain("RENAME_LANG_UNAVAILABLE");
+    }
+  });
+
+  it("renames a Rust pub fn identifier", async () => {
+    fx = newFixture();
+    fx.write("src/b.rs", "pub fn forkable() -> i32 { 1 }\n");
+    const r = await runSymbolsPass(await makeOpts(fx));
+    if (!r.available) return;
+    const raw = readFileSync(fx.resolve("src/b.rs"), "utf8");
+    if (raw.includes("splitshift")) {
+      expect(raw).toContain("fn splitshift");
+    } else {
+      const codes = (r.warnings ?? []).map((w) => w.code);
+      expect(codes).toContain("RENAME_LANG_UNAVAILABLE");
+    }
+  });
 });
 
-describe("symbols pass — Go (F4) — deferred: language not in napi", () => {
-  it.todo("renames a top-level var identifier (awaits napi go bindings)");
-  it.todo("renames a function declaration identifier (awaits napi go bindings)");
+describe("symbols pass — Go (Phase 5 polyglot)", () => {
+  let fx: FixtureRepo;
+  afterEach(() => fx?.cleanup());
+
+  it("renames a Go top-level var identifier via @ast-grep/lang-go", async () => {
+    fx = newFixture();
+    fx.write("src/a.go", "package main\n\nvar forkable = 1\n");
+    const r = await runSymbolsPass(await makeOpts(fx));
+    if (!r.available) return;
+    const raw = readFileSync(fx.resolve("src/a.go"), "utf8");
+    if (raw.includes("splitshift")) {
+      expect(raw).toContain("var splitshift");
+    } else {
+      const codes = (r.warnings ?? []).map((w) => w.code);
+      expect(codes).toContain("RENAME_LANG_UNAVAILABLE");
+    }
+  });
+
+  it("renames a Go function declaration identifier", async () => {
+    fx = newFixture();
+    fx.write("src/b.go", "package main\n\nfunc forkable() int { return 1 }\n");
+    const r = await runSymbolsPass(await makeOpts(fx));
+    if (!r.available) return;
+    const raw = readFileSync(fx.resolve("src/b.go"), "utf8");
+    if (raw.includes("splitshift")) {
+      expect(raw).toContain("func splitshift");
+    } else {
+      const codes = (r.warnings ?? []).map((w) => w.code);
+      expect(codes).toContain("RENAME_LANG_UNAVAILABLE");
+    }
+  });
 });
 
 describe("symbols pass — comments (§9.2 default-on)", () => {

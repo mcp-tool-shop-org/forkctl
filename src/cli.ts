@@ -325,6 +325,11 @@ renameCmd
   .option("--preserve-comments", "skip comment rewrites in source code", false)
   .option("--deep-ts", "force-enable ts-morph deep TS pass", false)
   .option("--no-deep-ts", "force-disable ts-morph deep TS pass")
+  .option("--brand", "product-brand mode — emit per-category hit counts in the plan", false)
+  .option(
+    "--strings <mode>",
+    "string-literal rewrite gate: off | safe | review | all (default: review if --brand, else all)",
+  )
   .option("--json", "raw JSON output")
   .action(async (repoPath, opts) => {
     const input: Record<string, unknown> = {
@@ -333,10 +338,12 @@ renameCmd
       to: opts.to,
       lockfileStrategy: opts.lockfileStrategy,
       preserveComments: !!opts.preserveComments,
+      brand: !!opts.brand,
     };
     if (opts.layers) input.layers = String(opts.layers).split(",").map((s) => s.trim()).filter(Boolean);
     if (opts.exclude) input.exclude = Array.isArray(opts.exclude) ? opts.exclude : [opts.exclude];
     if (opts.deepTs !== undefined) input.deepTs = !!opts.deepTs;
+    if (opts.strings) input.stringsMode = String(opts.strings);
     await run("forkctl_rename_plan", input, opts);
   });
 

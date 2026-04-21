@@ -11,9 +11,11 @@ import type {
   RenameLayer,
   RenamePlan,
   RenameWarning,
+  StringsMode,
   VariantEntry,
   VariantKey,
 } from "../../schemas/rename.js";
+import { countByBrandCategory, filesByBrandCategory } from "./categories.js";
 import { runIdentityPass } from "./identity/index.js";
 import { runSymbolsPass } from "./symbols.js";
 import { runDeepTsPass } from "./deep-ts.js";
@@ -32,6 +34,11 @@ export interface BuildPlanOptions {
   deepTs?: boolean | undefined;
   preserveComments: boolean;
   preserveHistory?: boolean;
+  /** Product-brand mode — emits categorized counts in the plan. */
+  brand?: boolean;
+  /** String-literal gate mode. Defaults to `all` (unchanged v1.1.0 behavior)
+   *  when brand is false, `review` when brand is true. */
+  stringsMode?: StringsMode;
 }
 
 function variantsToSchemaRecord(v: VariantSet): Record<VariantKey, VariantEntry> {
@@ -58,6 +65,8 @@ function hashPlanInput(opts: BuildPlanOptions): string {
     deepTs: opts.deepTs,
     preserveComments: opts.preserveComments,
     preserveHistory: opts.preserveHistory ?? true,
+    brand: opts.brand ?? false,
+    stringsMode: opts.stringsMode ?? null,
   }));
   return h.digest("hex").slice(0, 16);
 }
@@ -88,6 +97,11 @@ export async function buildRenamePlan(opts: BuildPlanOptions): Promise<{ plan: R
     fingerprint: hashPlanInput(opts),
   };
 
+  // Default stringsMode: `review` if brand=true (aggressive but audited),
+  // `all` otherwise (v1.1.0 behavior). Explicit input wins.
+  const effectiveStringsMode: StringsMode =
+    opts.stringsMode ?? (opts.brand ? "review" : "all");
+
   const identityFiles = new Set<string>();
 
   if (opts.layers.includes("identity")) {
@@ -115,6 +129,7 @@ export async function buildRenamePlan(opts: BuildPlanOptions): Promise<{ plan: R
       preserveComments: opts.preserveComments,
       files: walked,
       byLanguage: langMan.byLanguage,
+      stringsMode: effectiveStringsMode,
     });
     if (!r.available) {
       warnings.push({
@@ -196,6 +211,23 @@ export async function buildRenamePlan(opts: BuildPlanOptions): Promise<{ plan: R
     (plan.layers.deepTs?.files ?? 0) +
     (plan.layers.textual?.files ?? 0);
 
+  if (opts.brand) {
+    const hits = countByBrandCategory(allChanges);
+    const files = filesByBrandCategory(allChanges);
+    plan.brand = {
+      token: opts.to,
+      stringsMode: effectiveStringsMode,
+      categories: {
+        identifier: { hits: hits.identifier, files: files.identifier },
+        envVar: { hits: hits.envVar, files: files.envVar },
+        toolName: { hits: hits.toolName, files: files.toolName },
+        errorClass: { hits: hits.errorClass, files: files.errorClass },
+        header: { hits: hits.header, files: files.header },
+        other: { hits: hits.other, files: files.other },
+      },
+    };
+  }
+
   return { plan, changes: allChanges, warnings };
 }
 
@@ -228,6 +260,24 @@ function renderDiff(plan: RenamePlan, changes: RenameChange[]): string {
   lines.push(`# to:   ${plan.to}`);
   lines.push(`# path: ${plan.path}`);
   lines.push(`# total files: ${plan.totalFiles}`);
+  if (plan.brand) {
+    lines.push("#");
+    lines.push(`# brand mode on — strings: ${plan.brand.stringsMode}`);
+    const labelPad = 14;
+    const pad = (s: string): string => s.padEnd(labelPad);
+    for (const [key, label] of [
+      ["identifier", "identifiers"],
+      ["envVar", "env-vars"],
+      ["toolName", "tool-names"],
+      ["errorClass", "error-classes"],
+      ["header", "headers"],
+      ["other", "other"],
+    ] as const) {
+      const c = plan.brand.categories[key];
+      if (c.hits === 0) continue;
+      lines.push(`#   ${pad(label)} ${String(c.hits).padStart(4)} hits across ${String(c.files).padStart(3)} file${c.files === 1 ? "" : "s"}`);
+    }
+  }
   lines.push("");
   const files = Array.from(byFile.keys()).sort();
   for (const file of files) {

@@ -27,6 +27,18 @@ export const RenameLayerSchema = z.enum([
 ]);
 export type RenameLayer = z.infer<typeof RenameLayerSchema>;
 
+/**
+ * `--strings` gate (design §5). Controls the string-literal rewrite mode of
+ * the symbols pass.
+ *   off     — no string-literal rewrites at all.
+ *   safe    — reserved for callsite-allowlist mode (same as `review` today).
+ *   review  — rewrites apply but emit STRING_REWRITE_PENDING_REVIEW warnings
+ *             per hit so users can audit before apply.
+ *   all     — current v1.1.0 behavior: rewrite everything, warn per hit.
+ */
+export const StringsModeSchema = z.enum(["off", "safe", "review", "all"]);
+export type StringsMode = z.infer<typeof StringsModeSchema>;
+
 export const RenamePlanInputSchema = z.object({
   path: z.string().min(1),
   from: NameSchema,
@@ -42,6 +54,18 @@ export const RenamePlanInputSchema = z.object({
   lspTier: z.boolean().optional().default(false),
   preserveComments: z.boolean().optional().default(false),
   preserveHistory: z.boolean().optional().default(true),
+  /**
+   * Product-brand rename mode (design/brand-mode.md). When true, per-category
+   * counts are emitted in the plan output, enabling veto-by-category via
+   * `--categories`. Default `false` — conservative behavior unchanged.
+   */
+  brand: z.boolean().optional().default(false),
+  /**
+   * String-literal rewrite gate. Default is `all` (v1.1.0 behavior). When
+   * `brand` is true and `stringsMode` is not explicitly set, the plan builder
+   * defaults to `review` so users opt into aggressive string rewrites.
+   */
+  stringsMode: StringsModeSchema.optional(),
 });
 export type RenamePlanInput = z.infer<typeof RenamePlanInputSchema>;
 
@@ -148,6 +172,43 @@ export const RenamePlanSchema = z.object({
   warnings: z.array(RenameWarningSchema),
   /** Where the diff file was written (if any). */
   diffPath: z.string().optional(),
+  /**
+   * Per-brand-category counts of changes (design/brand-mode.md §4).
+   * Populated when `brand: true` in the input; omitted otherwise to keep
+   * the v1.1.0 plan shape stable for non-brand consumers.
+   */
+  brand: z
+    .object({
+      token: z.string(),
+      stringsMode: StringsModeSchema,
+      categories: z.object({
+        identifier: z.object({
+          hits: z.number().int().nonnegative(),
+          files: z.number().int().nonnegative(),
+        }),
+        envVar: z.object({
+          hits: z.number().int().nonnegative(),
+          files: z.number().int().nonnegative(),
+        }),
+        toolName: z.object({
+          hits: z.number().int().nonnegative(),
+          files: z.number().int().nonnegative(),
+        }),
+        errorClass: z.object({
+          hits: z.number().int().nonnegative(),
+          files: z.number().int().nonnegative(),
+        }),
+        header: z.object({
+          hits: z.number().int().nonnegative(),
+          files: z.number().int().nonnegative(),
+        }),
+        other: z.object({
+          hits: z.number().int().nonnegative(),
+          files: z.number().int().nonnegative(),
+        }),
+      }),
+    })
+    .optional(),
   /** Total number of files touched across all layers. */
   totalFiles: z.number().int().nonnegative(),
   /** Selected layers (after defaults). */

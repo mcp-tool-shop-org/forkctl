@@ -12,7 +12,7 @@
 import { promises as fs } from "node:fs";
 import * as path from "node:path";
 type NapiLang = unknown;
-import type { RenameChange, RenameWarning } from "../../schemas/rename.js";
+import type { RenameChange, RenameWarning, StringsMode } from "../../schemas/rename.js";
 import type { VariantSet } from "./variants.js";
 import { escapeRegex, rewriteIdentifierVariants } from "./variants.js";
 import type { WalkedFile } from "./walk.js";
@@ -75,6 +75,17 @@ export interface SymbolsPassOptions {
   files: readonly WalkedFile[];
   /** Map of language name → list of file rel paths. */
   byLanguage: Record<string, string[]>;
+  /**
+   * String-literal rewrite gate. Defaults to `all` (v1.1.0 behavior).
+   *   off    — skip all string-literal rewrites entirely.
+   *   safe   — currently behaves like `review` (callsite allowlist is
+   *            a future enhancement).
+   *   review — apply rewrites, but each hit emits a
+   *            STRING_REWRITE_PENDING_REVIEW warning flagging it for audit.
+   *   all    — apply rewrites silently (single STRING_LITERAL_REWRITTEN
+   *            warning per hit, v1.1.0 behavior).
+   */
+  stringsMode?: StringsMode;
 }
 
 export interface SymbolsPassResult {
@@ -272,19 +283,41 @@ export async function runSymbolsPass(opts: SymbolsPassOptions): Promise<SymbolsP
       interface StringHit { before: string; after: string; line: number; startOffset: number; endOffset: number }
       const stringHits: StringHit[] = [];
       const wordRe = new RegExp(`\\b(${alternation.alt})\\b`, "g");
+      const stringsMode: StringsMode = opts.stringsMode ?? "all";
+
+      /**
+       * Rewrite a string body in two passes:
+       *  1. JS `\b` word boundary — prose mentions (`the forkable tool`).
+       *  2. Identifier-boundary sweep — snake_case / kebab / SCREAMING_SNAKE
+       *     tool-name literals like `"forkable_assess"`. This closes the gap
+       *     where `\b` treats `_` as a word char and misses
+       *     `forkable_assess` → `forkctl_assess`. Also catches mid-token
+       *     PascalCase inside prose (e.g. `"throws ForkableError"`).
+       */
+      const rewriteStringBody = (body: string): string => {
+        let out = body.replace(wordRe, (match) => alternation.map.get(match) ?? match);
+        out = out.replace(/[A-Za-z0-9_-]+/g, (word) => {
+          const r = rewriteIdentifierVariants(word, opts.variants);
+          return r ?? word;
+        });
+        return out;
+      };
 
       const stringFragmentMatches = findKind({ rule: { kind: "string_fragment" } });
       const seenFragmentOffsets = new Set<string>();
-      for (const m of stringFragmentMatches) {
-        const replaced = m.text.replace(wordRe, (match) => alternation.map.get(match) ?? match);
-        if (replaced !== m.text) {
-          stringHits.push({ before: m.text, after: replaced, line: m.line, startOffset: m.startOffset, endOffset: m.endOffset });
-          seenFragmentOffsets.add(`${m.startOffset}:${m.endOffset}`);
+      if (stringsMode !== "off") {
+        for (const m of stringFragmentMatches) {
+          const replaced = rewriteStringBody(m.text);
+          if (replaced !== m.text) {
+            stringHits.push({ before: m.text, after: replaced, line: m.line, startOffset: m.startOffset, endOffset: m.endOffset });
+            seenFragmentOffsets.add(`${m.startOffset}:${m.endOffset}`);
+          }
         }
       }
       // Fallback for languages/grammars that don't expose string_fragment —
       // operate on the string node itself, but only rewrite the interior to
       // avoid clobbering the quote characters.
+      if (stringsMode !== "off")
       for (const kind of ["string", "template_string"]) {
         const stringNodeMatches = findKind({ rule: { kind } });
         for (const m of stringNodeMatches) {
@@ -300,7 +333,7 @@ export async function runSymbolsPass(opts: SymbolsPassOptions): Promise<SymbolsP
           const first = m.text[0];
           const last = m.text[m.text.length - 1];
           const body = m.text.slice(1, -1);
-          const replacedBody = body.replace(wordRe, (match) => alternation.map.get(match) ?? match);
+          const replacedBody = rewriteStringBody(body);
           if (replacedBody !== body) {
             stringHits.push({
               before: m.text,
@@ -366,11 +399,15 @@ export async function runSymbolsPass(opts: SymbolsPassOptions): Promise<SymbolsP
           before: h.before,
           after: h.after,
         });
-        result.warnings.push({
-          code: "STRING_LITERAL_REWRITTEN",
-          message: `Rewrote string literal '${h.before}' → '${h.after}' at ${rel}:${h.line}. Review to confirm this is not an incidental mention.`,
-          file: rel,
-        });
+        const warnCode =
+          stringsMode === "review" || stringsMode === "safe"
+            ? "STRING_REWRITE_PENDING_REVIEW"
+            : "STRING_LITERAL_REWRITTEN";
+        const warnMsg =
+          warnCode === "STRING_REWRITE_PENDING_REVIEW"
+            ? `Staged string-literal rewrite for review: '${h.before}' → '${h.after}' at ${rel}:${h.line}. Edit the plan to remove if incorrect.`
+            : `Rewrote string literal '${h.before}' → '${h.after}' at ${rel}:${h.line}. Review to confirm this is not an incidental mention.`;
+        result.warnings.push({ code: warnCode, message: warnMsg, file: rel });
       }
 
       if (fileChanges.length === 0) continue;

@@ -59,6 +59,8 @@ export const renamePlanTool: ToolDescriptor<RenamePlanInput, RenamePlanOutput> =
         deepTs: input.deepTs,
         preserveComments: input.preserveComments,
         preserveHistory: input.preserveHistory,
+        brand: input.brand,
+        stringsMode: input.stringsMode,
       });
       plan.warnings = warnings;
       const { planPath, diffPath } = await writePlanArtifacts(repoRoot, plan, changes);

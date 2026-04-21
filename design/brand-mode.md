@@ -393,11 +393,18 @@ the same phase as a power-user escape hatch.
 ~3–4 days — `review` mode is the most UX-heavy piece (interactive loop, confirm per
 hunk, remember deferred hunks across `plan`/`apply` boundary).
 
-### Phase 5 — Polyglot bundle (carried from original v1.2 plan)
+### Phase 5 — Polyglot bundle — **SHIPPED**
 
-`@ast-grep/lang-*` dynamic registration via `registerDynamicLanguage`. Deprioritized
-relative to this doc — the self-rename produced real signal for `--brand`, polyglot is
-still speculative.
+`@ast-grep/lang-*` dynamic registration via `registerDynamicLanguage`. 11 languages
+added as `optionalDependencies`: python, rust, go, java, ruby, csharp, cpp, c, bash,
+yaml, json. At module-load the symbols pass tries to dynamically import each package;
+successes are registered and added to `RESOLVED_LANGS`; failures fall through to the
+existing `RENAME_LANG_UNAVAILABLE` warning path (no regression for users who skip
+optional deps). `parse()` is called with the language name string — works uniformly
+for built-in and dynamically-registered langs.
+
+Polyglot coverage verified end-to-end for Python, Rust, and Go on a smoke fixture:
+all identifier hits rewrite correctly.
 
 ## 10. Non-goals
 

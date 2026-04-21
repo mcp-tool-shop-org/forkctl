@@ -14,7 +14,7 @@ import * as path from "node:path";
 type NapiLang = unknown;
 import type { RenameChange, RenameWarning } from "../../schemas/rename.js";
 import type { VariantSet } from "./variants.js";
-import { escapeRegex } from "./variants.js";
+import { escapeRegex, rewriteIdentifierVariants } from "./variants.js";
 import type { WalkedFile } from "./walk.js";
 
 // ast-grep has two shapes across versions; we import defensively.
@@ -207,18 +207,36 @@ export async function runSymbolsPass(opts: SymbolsPassOptions): Promise<SymbolsP
       };
 
       // ---- Identifier-kind matches (functions, consts, imports, etc.) ----
+      //
+      // We match any identifier whose text CONTAINS a variant (unanchored
+      // regex) so compound names like `ForkableError` or `makeForkableTool`
+      // surface. Actual replacement is decided per-hit by
+      // `rewriteIdentifierVariants`, which enforces case-aware word boundaries
+      // — so `Forkableness` and `unforkable` still correctly DO NOT rewrite.
+      //
+      // Kinds covered:
+      //   identifier                   — value-position (consts, funcs, import specifiers)
+      //   type_identifier (TS/Tsx)     — class / interface / type-alias names at declaration
+      //   property_identifier          — method names, enum members, object keys
+      //   shorthand_property_identifier — { foo } shorthand
       const identMatches: HitRange[] = [];
+      const loose = `(${alternation.alt})`;
       pushUnique(
         identMatches,
-        findKind({ rule: { kind: "identifier", regex: `^(${alternation.alt})$` } }),
+        findKind({ rule: { kind: "identifier", regex: loose } }),
       );
-      // For TS/Tsx, class and interface names use kind: type_identifier.
-      // Without this, `class Forkctl {}` and `interface Forkctl {}` are missed
-      // entirely. See Bug 1 in tests-found-bugs.md.
+      pushUnique(
+        identMatches,
+        findKind({ rule: { kind: "property_identifier", regex: loose } }),
+      );
+      pushUnique(
+        identMatches,
+        findKind({ rule: { kind: "shorthand_property_identifier", regex: loose } }),
+      );
       if (TYPE_IDENTIFIER_LANGS.has(langName)) {
         pushUnique(
           identMatches,
-          findKind({ rule: { kind: "type_identifier", regex: `^(${alternation.alt})$` } }),
+          findKind({ rule: { kind: "type_identifier", regex: loose } }),
         );
       }
 
@@ -308,8 +326,15 @@ export async function runSymbolsPass(opts: SymbolsPassOptions): Promise<SymbolsP
       };
 
       for (const m of identMatches) {
-        const to = alternation.map.get(m.text);
-        if (!to) continue;
+        // Whole-word match: fast path.
+        let to = alternation.map.get(m.text);
+        // Compound identifier (e.g. `ForkableError`, `makeForkableTool`):
+        // defer to case-aware word-boundary rewrite.
+        if (!to) {
+          const rewritten = rewriteIdentifierVariants(m.text, opts.variants);
+          if (rewritten === null) continue;
+          to = rewritten;
+        }
         pushEdit(m.startOffset, m.endOffset, to);
         fileChanges.push({
           file: rel,

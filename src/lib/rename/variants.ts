@@ -109,6 +109,93 @@ export function lookupReplacement(
 }
 
 /**
+ * Build a regex that matches `from` at identifier-internal word boundaries
+ * (PascalCase / camelCase / snake_case / kebab-case / SCREAMING_SNAKE).
+ *
+ * JS `\b` treats any alphanumeric run as one word, so `\bForkable\b` does NOT
+ * match inside `ForkableError` (no boundary between `e` and `E`). This helper
+ * builds the correct case-aware boundaries so `ForkableError` DOES match for
+ * variant `Forkable`, while `Forkableness` and `unforkable` correctly do not.
+ *
+ * Left-boundary rule keyed on first-char case:
+ *   Uppercase-starting (`Forkable`): ^ OR preceded by lowercase/digit/separator
+ *   Lowercase-starting (`forkable`): ^ OR preceded by separator (not letter)
+ *   Uppercase-all    (`FORKABLE`)  : ^ OR preceded by separator (not letter)
+ *
+ * Right-boundary rule keyed on last-char case:
+ *   Lowercase-ending (`Forkable`, `forkable`): next is Uppercase/digit/separator/end
+ *   Uppercase-ending (`FORKABLE`)            : next is separator/non-letter/end
+ */
+export function buildIdentifierBoundaryRegex(from: string): RegExp | null {
+  if (from.length === 0) return null;
+  const first = from[0] ?? "";
+  const last = from[from.length - 1] ?? "";
+  const firstUpper = /[A-Z]/.test(first);
+  const firstLower = /[a-z]/.test(first);
+  const lastUpper = /[A-Z]/.test(last);
+  const lastLower = /[a-z]/.test(last);
+
+  let left: string;
+  if (firstUpper && !firstLower) {
+    // Matches `Forkable` and `FORKABLE` — different right boundaries below.
+    left = `(?:^|(?<=[a-z0-9_\\-]))`;
+  } else if (firstLower) {
+    left = `(?:^|(?<=[_\\-]))`;
+  } else {
+    return null;
+  }
+
+  let right: string;
+  if (lastLower) {
+    right = `(?=[A-Z_\\-0-9]|$)`;
+  } else if (lastUpper) {
+    right = `(?=[_\\-]|$|[^A-Za-z])`;
+  } else {
+    return null;
+  }
+
+  return new RegExp(left + escapeRegex(from) + right, "g");
+}
+
+/**
+ * Rewrite an identifier by replacing every word-boundary occurrence of an
+ * enabled variant's `from` with its `to`. Understands PascalCase, camelCase,
+ * snake_case, kebab-case, and SCREAMING_SNAKE word boundaries.
+ *
+ * Examples (variants = buildVariantSet("forkable", "forkctl")):
+ *   `Forkable`         → `Forkctl`
+ *   `ForkableError`    → `ForkctlError`
+ *   `ForkableErrorCode`→ `ForkctlErrorCode`
+ *   `makeForkableTool` → `makeForkctlTool`
+ *   `FORKABLE_LOG`     → `FORKCTL_LOG`
+ *   `forkable_assess`  → `forkctl_assess`
+ *   `Forkableness`     → `Forkableness` (unchanged — lowercase tail fails boundary)
+ *   `unforkable`       → `unforkable` (unchanged — preceded by lowercase letter)
+ *
+ * Returns the rewritten identifier, or null if no variant matched.
+ */
+export function rewriteIdentifierVariants(
+  name: string,
+  variants: VariantSet,
+): string | null {
+  const enabled = Object.values(variants)
+    .filter((v) => v.enabled)
+    .sort((a, b) => b.from.length - a.from.length);
+  let current = name;
+  let changed = false;
+  for (const v of enabled) {
+    const re = buildIdentifierBoundaryRegex(v.from);
+    if (!re) continue;
+    const next = current.replace(re, () => {
+      changed = true;
+      return v.to;
+    });
+    current = next;
+  }
+  return changed ? current : null;
+}
+
+/**
  * Replace all variant occurrences in `text` using word boundaries. Returns
  * the rewritten string plus the list of (before,after) pairs observed.
  */

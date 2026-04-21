@@ -28,6 +28,7 @@ import * as path from "node:path";
 import type { RenameChange, RenameWarning } from "../../schemas/rename.js";
 import type { Logger } from "../logger.js";
 import type { VariantSet } from "./variants.js";
+import { rewriteIdentifierVariants } from "./variants.js";
 
 // ts-morph is a heavy dep; import defensively so missing-module is graceful.
 type TsMorph = typeof import("ts-morph");
@@ -69,15 +70,23 @@ export interface DeepTsPassResult {
 
 /**
  * Check whether a name (as seen in TS source) matches any of the enabled
- * casing variants' `from` values. Returns the matched entry or undefined.
+ * casing variants — either as a whole word OR as a case-aware prefix/word
+ * within a compound identifier (e.g. `ForkableError`, `makeForkableTool`).
+ * Returns the rename target or undefined.
  */
 function lookupVariantFromName(
   name: string,
   variants: VariantSet,
 ): { from: string; to: string } | undefined {
+  // Whole-word match (fast path, preserves the original semantic).
   for (const v of Object.values(variants)) {
     if (!v.enabled) continue;
     if (v.from === name) return { from: v.from, to: v.to };
+  }
+  // Compound identifier — case-aware word-boundary rewrite.
+  const rewritten = rewriteIdentifierVariants(name, variants);
+  if (rewritten !== null && rewritten !== name) {
+    return { from: name, to: rewritten };
   }
   return undefined;
 }
@@ -185,6 +194,18 @@ export async function runDeepTsPass(opts: DeepTsPassOptions): Promise<DeepTsPass
           if (!name) continue;
           const hit = lookupVariantFromName(name, opts.variants);
           if (hit) candidates.push({ node: decl, name, newName: hit.to, kind: "class" });
+          // Class methods and properties — catches `makeForkableTool` method
+          // definitions and `ForkableError` nested-class members.
+          for (const method of decl.getMethods()) {
+            const mName = method.getName();
+            const mHit = lookupVariantFromName(mName, opts.variants);
+            if (mHit) candidates.push({ node: method, name: mName, newName: mHit.to, kind: "method" });
+          }
+          for (const prop of decl.getProperties()) {
+            const pName = prop.getName();
+            const pHit = lookupVariantFromName(pName, opts.variants);
+            if (pHit) candidates.push({ node: prop, name: pName, newName: pHit.to, kind: "property" });
+          }
         }
         for (const decl of sf.getInterfaces()) {
           const name = decl.getName();
@@ -200,6 +221,13 @@ export async function runDeepTsPass(opts: DeepTsPassOptions): Promise<DeepTsPass
           const name = decl.getName();
           const hit = lookupVariantFromName(name, opts.variants);
           if (hit) candidates.push({ node: decl, name, newName: hit.to, kind: "enum" });
+          // Enum members — catches `ForkableErrorCode.MAKE_FORKABLE_BRANCH_EXISTS`
+          // members by treating the prefix as case-boundary-matching.
+          for (const member of decl.getMembers()) {
+            const memName = member.getName();
+            const memHit = lookupVariantFromName(memName, opts.variants);
+            if (memHit) candidates.push({ node: member, name: memName, newName: memHit.to, kind: "enum-member" });
+          }
         }
         for (const decl of sf.getFunctions()) {
           const name = decl.getName();

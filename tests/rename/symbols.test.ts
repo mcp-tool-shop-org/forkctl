@@ -210,6 +210,51 @@ describe("symbols pass — source-code string literals (§9.3 default-on)", () =
   });
 });
 
+describe("symbols pass — compound-identifier rewrite (prefix + mid-camelCase)", () => {
+  let fx: FixtureRepo;
+  afterEach(() => fx?.cleanup());
+
+  it("renames class `ForkableError` → `SplitshiftError` (PascalCase-prefix compound)", async () => {
+    fx = newFixture();
+    fx.write("src/err.ts", "export class ForkableError extends Error {}\n");
+    const r = await runSymbolsPass(await makeOpts(fx));
+    if (!r.available) return;
+    const raw = readFileSync(fx.resolve("src/err.ts"), "utf8");
+    expect(raw).toContain("class SplitshiftError");
+    expect(raw).not.toContain("ForkableError");
+  });
+
+  it("renames enum `ForkableErrorCode` → `SplitshiftErrorCode` (nested PascalCase compound)", async () => {
+    fx = newFixture();
+    fx.write("src/codes.ts", "export enum ForkableErrorCode { X = 'x' }\n");
+    const r = await runSymbolsPass(await makeOpts(fx));
+    if (!r.available) return;
+    const raw = readFileSync(fx.resolve("src/codes.ts"), "utf8");
+    expect(raw).toContain("enum SplitshiftErrorCode");
+    expect(raw).not.toContain("ForkableErrorCode");
+  });
+
+  it("renames function `makeForkableTool` → `makeSplitshiftTool` (mid-camelCase)", async () => {
+    fx = newFixture();
+    fx.write("src/mk.ts", "export function makeForkableTool() {}\nmakeForkableTool();\n");
+    const r = await runSymbolsPass(await makeOpts(fx));
+    if (!r.available) return;
+    const raw = readFileSync(fx.resolve("src/mk.ts"), "utf8");
+    expect(raw).toContain("function makeSplitshiftTool");
+    expect(raw).toContain("makeSplitshiftTool();");
+  });
+
+  it("renames SCREAMING_SNAKE env constant `FORKABLE_LOG` → `SPLITSHIFT_LOG`", async () => {
+    fx = newFixture();
+    fx.write("src/env.ts", "export const FORKABLE_LOG = 'debug';\nconst x = FORKABLE_LOG;\n");
+    const r = await runSymbolsPass(await makeOpts(fx));
+    if (!r.available) return;
+    const raw = readFileSync(fx.resolve("src/env.ts"), "utf8");
+    expect(raw).toContain("const SPLITSHIFT_LOG = 'debug'");
+    expect(raw).toContain("const x = SPLITSHIFT_LOG");
+  });
+});
+
 describe("symbols pass — partial-match safety", () => {
   let fx: FixtureRepo;
   afterEach(() => fx?.cleanup());

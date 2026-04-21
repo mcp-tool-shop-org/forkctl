@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildIdentifierBoundaryRegex,
   buildVariantSet,
   buildWordBoundaryRegex,
   escapeRegex,
   lookupReplacement,
+  rewriteIdentifierVariants,
   rewriteTextual,
 } from "../../src/lib/rename/variants.js";
 
@@ -151,5 +153,91 @@ describe("rewriteTextual — text replacement with hit tracking", () => {
     const once = rewriteTextual("a forkable b", vs).output;
     const twice = rewriteTextual(once, vs).output;
     expect(twice).toBe(once);
+  });
+});
+
+describe("rewriteIdentifierVariants — case-aware word-boundary rewrite", () => {
+  const vs = buildVariantSet("forkable", "forkctl");
+
+  it("rewrites whole-word PascalCase identifier", () => {
+    expect(rewriteIdentifierVariants("Forkable", vs)).toBe("Forkctl");
+  });
+
+  it("rewrites PascalCase-prefix compound (ForkableError → ForkctlError)", () => {
+    expect(rewriteIdentifierVariants("ForkableError", vs)).toBe("ForkctlError");
+  });
+
+  it("rewrites nested PascalCase compound (ForkableErrorCode → ForkctlErrorCode)", () => {
+    expect(rewriteIdentifierVariants("ForkableErrorCode", vs)).toBe("ForkctlErrorCode");
+  });
+
+  it("rewrites mid-camelCase occurrence (makeForkableTool → makeForkctlTool)", () => {
+    expect(rewriteIdentifierVariants("makeForkableTool", vs)).toBe("makeForkctlTool");
+  });
+
+  it("rewrites SCREAMING_SNAKE prefix (FORKABLE_LOG → FORKCTL_LOG)", () => {
+    expect(rewriteIdentifierVariants("FORKABLE_LOG", vs)).toBe("FORKCTL_LOG");
+  });
+
+  it("rewrites SCREAMING_SNAKE multi-segment (FORKABLE_STATE_DIR → FORKCTL_STATE_DIR)", () => {
+    expect(rewriteIdentifierVariants("FORKABLE_STATE_DIR", vs)).toBe("FORKCTL_STATE_DIR");
+  });
+
+  it("rewrites snake_case prefix (forkable_assess → forkctl_assess)", () => {
+    expect(rewriteIdentifierVariants("forkable_assess", vs)).toBe("forkctl_assess");
+  });
+
+  it("rewrites kebab-case prefix (forkable-adapter → forkctl-adapter)", () => {
+    expect(rewriteIdentifierVariants("forkable-adapter", vs)).toBe("forkctl-adapter");
+  });
+
+  it("does NOT rewrite Forkableness (lowercase tail fails boundary)", () => {
+    expect(rewriteIdentifierVariants("Forkableness", vs)).toBeNull();
+  });
+
+  it("does NOT rewrite unforkable (preceded by lowercase letter)", () => {
+    expect(rewriteIdentifierVariants("unforkable", vs)).toBeNull();
+  });
+
+  it("does NOT rewrite forkability (lowercase tail on lowercase variant)", () => {
+    expect(rewriteIdentifierVariants("forkability", vs)).toBeNull();
+  });
+
+  it("does NOT rewrite starship (no variant match at all)", () => {
+    expect(rewriteIdentifierVariants("starship", vs)).toBeNull();
+  });
+
+  it("returns null when input is empty", () => {
+    expect(rewriteIdentifierVariants("", vs)).toBeNull();
+  });
+
+  it("returns null when identifier has no brand reference", () => {
+    expect(rewriteIdentifierVariants("someOtherName", vs)).toBeNull();
+  });
+});
+
+describe("buildIdentifierBoundaryRegex — boundary rules", () => {
+  it("PascalCase `Forkable` matches prefix followed by Uppercase", () => {
+    const re = buildIdentifierBoundaryRegex("Forkable")!;
+    expect(re.test("ForkableError")).toBe(true);
+  });
+
+  it("PascalCase `Forkable` does NOT match followed by lowercase (Forkableness)", () => {
+    const re = buildIdentifierBoundaryRegex("Forkable")!;
+    expect(re.test("Forkableness")).toBe(false);
+  });
+
+  it("SCREAMING `FORKABLE` matches prefix followed by underscore", () => {
+    const re = buildIdentifierBoundaryRegex("FORKABLE")!;
+    expect(re.test("FORKABLE_LOG")).toBe(true);
+  });
+
+  it("lowercase `forkable` does NOT match when preceded by lowercase letter", () => {
+    const re = buildIdentifierBoundaryRegex("forkable")!;
+    expect(re.test("unforkable")).toBe(false);
+  });
+
+  it("returns null for empty input", () => {
+    expect(buildIdentifierBoundaryRegex("")).toBeNull();
   });
 });

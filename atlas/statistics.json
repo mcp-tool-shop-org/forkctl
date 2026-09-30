@@ -108,7 +108,9 @@
         "collapsed": false,
         "confidence": "low",
         "importsAndCoChanges": [],
-        "importsOnly": []
+        "importsOnly": [
+          "src"
+        ]
       },
       "cohesion": null,
       "cohesionDropped": false,
@@ -133,8 +135,8 @@
         "path": ".gitattributes"
       },
       {
-        "commits": 4,
-        "lines": 199,
+        "commits": 8,
+        "lines": 407,
         "path": ".github/workflows/ci.yml"
       },
       {
@@ -214,6 +216,36 @@
       },
       {
         "commits": 2,
+        "lines": 168,
+        "path": "atlas/README.md"
+      },
+      {
+        "commits": 2,
+        "lines": 60,
+        "path": "atlas/boundaries.yaml"
+      },
+      {
+        "commits": 2,
+        "lines": 518,
+        "path": "atlas/page.json"
+      },
+      {
+        "commits": 2,
+        "lines": 2038,
+        "path": "atlas/statistics.json"
+      },
+      {
+        "commits": 2,
+        "lines": 5724,
+        "path": "atlas/structure.json"
+      },
+      {
+        "commits": 2,
+        "lines": 36,
+        "path": "codecov.yml"
+      },
+      {
+        "commits": 2,
         "lines": 471,
         "path": "design/brand-mode.md"
       },
@@ -223,13 +255,13 @@
         "path": "design/rename.md"
       },
       {
-        "commits": 5,
-        "lines": 4357,
+        "commits": 9,
+        "lines": 4827,
         "path": "package-lock.json"
       },
       {
-        "commits": 3,
-        "lines": 90,
+        "commits": 5,
+        "lines": 92,
         "path": "package.json"
       },
       {
@@ -971,15 +1003,15 @@
   },
   "confidence": {
     "level": "low",
-    "reason": "fewer than 30 qualifying commits in the window, and fewer than 20 source files reach 10 revisions"
+    "reason": "fewer than 30 qualifying commits in the window, and fewer than 25 source files reach 10 revisions"
   },
-  "generatedAt": "2026-09-24T08:48:55.872Z",
+  "generatedAt": "2026-09-30T21:28:26.677Z",
   "generatedFrom": {
-    "commit": "31ad2f423e60a56a5c82487bc2c371e2f4bd0d7d"
+    "commit": "4e066e10c7e763ddb505a56b2146fdfd5f24aba7"
   },
   "pairs": [],
   "parameters": {
-    "appliedChangesetLimit": 42.25,
+    "appliedChangesetLimit": 43.75,
     "changeset": 50,
     "changesetFraction": 0.25,
     "cohesionDrop": 0.2,
@@ -988,16 +1020,16 @@
     "floor": "fallen",
     "floorHeld": false,
     "floorTrigger": "both",
-    "headDate": "2026-09-17T18:18:50-07:00",
-    "inScopeFiles": 169,
+    "headDate": "2026-09-30T14:25:25-07:00",
+    "inScopeFiles": 175,
     "pinnedStart": null,
-    "priorFloor": null,
-    "qualifyingCommits": 8,
+    "priorFloor": "fallen",
+    "qualifyingCommits": 12,
     "qualifyingMinimum": 30,
     "revisions": 5,
     "shared": 10,
     "sharedFloorUsed": 3,
-    "since": "2026-03-22T01:18:50.000Z",
+    "since": "2026-04-03T21:25:25.000Z",
     "sourceExtensions": [
       ".js",
       ".mjs",
@@ -1007,7 +1039,9 @@
       ".tsx",
       ".mts",
       ".cts",
-      ".py"
+      ".py",
+      ".rs",
+      ".gd"
     ],
     "sourceFileReach": 20,
     "sourceFileRise": 25,

@@ -1,20 +1,19 @@
 # forkctl: how it works
 
-Mapped at 2026-09-30 from commit 4e066e1 by Atlas 1.24.0.
+Mapped at 2026-10-01 from commit e8a273f by Atlas 1.24.0.
 
 ## What this is
 
 7 parts, mostly TypeScript (128 files), CSS (2), Astro (1) and JavaScript (1). Work enters through 5 doors; CI, forkctl and forkctl-mcp each reach 2 parts, and CI is followed because a pull request goes through it. It deploys a site to GitHub Pages. People run forkctl and forkctl-mcp.
 
-## What changed since 2026-09-24 (31ad2f4)
+## What changed since 2026-09-30 (4e066e1)
 
-- CI's pull request trigger now also names `codecov.yml`.
-- CI's push trigger now also names `codecov.yml`.
-- 1 file added and 3 changed content, across 2 parts.
+- CI's pull request trigger no longer names `.github/workflows/**`, `atlas/**`, `codecov.yml`, `package-lock.json`, `package.json`, `site/astro.config.mjs`, `site/package-lock.json`, `site/package.json`, `src/**`, `tests/**`, `tsconfig.json` and `vitest.config.ts`.
+- 1 file changed content, across 1 part.
 
 ## What comes in
 
-1. **CI.** On a pull request touching 12 paths; on a push to main touching 12 paths; or by hand. Runs tests/assess.test.ts, tests/audit.test.ts, tests/backend-hardening.test.ts and 47 more; builds src/.
+1. **CI.** On a pull request; on a push to main touching 12 paths; or by hand. Runs tests/assess.test.ts, tests/audit.test.ts, tests/backend-hardening.test.ts and 47 more; builds src/.
 2. **Deploy site to GitHub Pages.** On a push to main touching 2 paths; or by hand. Runs site/astro.config.mjs and site/src/.
 3. **forkctl** (a command people run). Runs src/cli.ts.
 4. **forkctl-mcp** (a command people run). Runs src/server.ts.

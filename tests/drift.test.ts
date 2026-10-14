@@ -15,7 +15,8 @@ describe("scanFile", () => {
   it("flags a leaked GitHub PAT", () => {
     const findings = scanFile(
       ".env",
-      "GITHUB_TOKEN=ghp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      // built at runtime so secret scanners don't flag a test fixture
+      "GITHUB_TOKEN=ghp" + "_" + "a".repeat(36),
     );
     const pat = findings.find((f) => f.code === "LEAKED_GITHUB_PAT")!;
     expect(pat).toBeDefined();
@@ -24,7 +25,8 @@ describe("scanFile", () => {
   });
 
   it("flags a leaked AWS access key", () => {
-    const findings = scanFile(".env", "AWS_KEY=AKIAABCDEFGHIJKLMNOP");
+    // built at runtime so secret scanners don't flag a test fixture
+    const findings = scanFile(".env", "AWS_KEY=AKIA" + "ABCDEFGHIJKLMNOP");
     expect(findings.map((f) => f.code)).toContain("LEAKED_AWS_ACCESS_KEY");
   });
 

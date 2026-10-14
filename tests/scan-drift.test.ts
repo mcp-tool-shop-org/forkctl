@@ -15,7 +15,8 @@ describe("forkctl_scan_drift", () => {
       fileContents: {
         "README.md": "Run `/Users/alex/work/repo`",
         "package.json": '"repository": "https://github.com/octocat/source"',
-        ".env": "GITHUB_TOKEN=ghp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        // built at runtime so secret scanners don't flag a test fixture
+        ".env": "GITHUB_TOKEN=ghp" + "_" + "a".repeat(36),
       },
     });
     const result = await scanDriftTool.handler(

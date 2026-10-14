@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Build fake credentials at runtime in the redaction, logging and drift tests so secret scanners do not flag test fixtures.
+
 ## [2.1.0] - 2026-04-21
 
 Closes all five phases of [`design/brand-mode.md`](design/brand-mode.md) — the product-brand rename engine that's a superset of the v1.1.0 content rename engine.

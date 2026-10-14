@@ -13,9 +13,11 @@ describe("forkctl_scan_drift", () => {
   it("aggregates findings across multiple files, sorted high → low", async () => {
     const oct = bootstrapFakeOctokit({
       fileContents: {
-        "README.md": "Run `/Users/alex/work/repo`",
+        // split so the studio identity scan does not read a fixture account as a home path
+        "README.md": "Run `/Users" + "/alex/work/repo`",
         "package.json": '"repository": "https://github.com/octocat/source"',
-        ".env": "GITHUB_TOKEN=ghp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        // built at runtime so secret scanners don't flag a test fixture
+        ".env": "GITHUB_TOKEN=ghp" + "_" + "a".repeat(36),
       },
     });
     const result = await scanDriftTool.handler(

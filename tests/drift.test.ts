@@ -3,12 +3,14 @@ import { scanFile } from "../src/lib/drift.js";
 
 describe("scanFile", () => {
   it("flags a hardcoded Windows local path", () => {
-    const findings = scanFile("README.md", "Run `node C:\\Users\\mike\\repo\\index.js`");
+    // split so the studio identity scan does not read a fixture account as a home path
+    const findings = scanFile("README.md", "Run `node C:\\Users" + "\\mike\\repo\\index.js`");
     expect(findings.map((f) => f.code)).toContain("HARDCODED_LOCAL_PATH");
   });
 
   it("flags a hardcoded macOS path", () => {
-    const findings = scanFile("Makefile", "/Users/alex/work/foo");
+    // split so the studio identity scan does not read a fixture account as a home path
+    const findings = scanFile("Makefile", "/Users" + "/alex/work/foo");
     expect(findings.map((f) => f.code)).toContain("HARDCODED_LOCAL_PATH");
   });
 

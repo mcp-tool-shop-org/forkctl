@@ -32,37 +32,30 @@
   "changes": {
     "fileCounts": {
       "added": 0,
-      "changed": 1,
+      "changed": 12,
       "moved": 0,
-      "parts": 1,
+      "parts": 3,
       "removed": 0
     },
     "items": [
       {
-        "kind": "door",
-        "sentence": "CI's pull request trigger no longer names `.github/workflows/**`, `atlas/**`, `codecov.yml`, `package-lock.json`, `package.json`, `site/astro.config.mjs`, `site/package-lock.json`, `site/package.json`, `src/**`, `tests/**`, `tsconfig.json` and `vitest.config.ts`.",
-        "subjects": [
-          ".github/workflows/ci.yml"
-        ]
-      },
-      {
         "kind": "counts",
-        "sentence": "1 file changed content, across 1 part.",
+        "sentence": "Nothing structural changed since 2026-10-01; 12 files changed content.",
         "subjects": []
       }
     ],
     "since": {
-      "commit": "4e066e10c7e763ddb505a56b2146fdfd5f24aba7",
-      "generatedAt": "2026-09-30T21:28:26.677Z"
+      "commit": "e8a273fef9be920c134a4c27b4e899bfe6854ec4",
+      "generatedAt": "2026-10-01T02:13:00.338Z"
     },
-    "unchanged": false
+    "unchanged": true
   },
   "changesTogether": [],
   "changesTogetherNote": [
     "Window: 180 days; a pair counts from 3 shared commits, since the window holds fewer than 30 qualifying commits."
   ],
   "changesTogetherWithTests": 0,
-  "commit": "e8a273fef9be920c134a4c27b4e899bfe6854ec4",
+  "commit": "c56e1c8efe61623631810e66a71f1ce4a1f4ad68",
   "defaultBranch": "main",
   "derived": "7 parts, mostly TypeScript (128 files), CSS (2), Astro (1) and JavaScript (1). Work enters through 5 doors; CI, forkctl and forkctl-mcp each reach 2 parts, and CI is followed because a pull request goes through it. It deploys a site to GitHub Pages. People run forkctl and forkctl-mcp.",
   "doors": [
@@ -287,7 +280,7 @@
   ],
   "engine": "1.24.0",
   "generated": [],
-  "generatedAt": "2026-10-01T02:13:00.338Z",
+  "generatedAt": "2026-10-14T22:48:45.206Z",
   "limits": [
     "8 writes and 8 reads use paths built at run time and are not named here.",
     "26 writes and 22 reads go to a path their caller passes, not to this repository.",

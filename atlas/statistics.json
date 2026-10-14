@@ -117,7 +117,7 @@
       "confidence": "low",
       "highWater": null,
       "name": "tests",
-      "qualifyingSourceCommits": 2,
+      "qualifyingSourceCommits": 3,
       "rebaseline": null
     }
   ],
@@ -135,8 +135,8 @@
         "path": ".gitattributes"
       },
       {
-        "commits": 10,
-        "lines": 411,
+        "commits": 12,
+        "lines": 447,
         "path": ".github/workflows/ci.yml"
       },
       {
@@ -150,8 +150,8 @@
         "path": ".gitignore"
       },
       {
-        "commits": 2,
-        "lines": 99,
+        "commits": 4,
+        "lines": 103,
         "path": "CHANGELOG.md"
       },
       {
@@ -215,8 +215,8 @@
         "path": "assets/logo.png"
       },
       {
-        "commits": 4,
-        "lines": 270,
+        "commits": 7,
+        "lines": 299,
         "path": "atlas/README.md"
       },
       {
@@ -225,18 +225,18 @@
         "path": "atlas/boundaries.yaml"
       },
       {
-        "commits": 4,
-        "lines": 840,
+        "commits": 7,
+        "lines": 917,
         "path": "atlas/page.json"
       },
       {
-        "commits": 4,
-        "lines": 2174,
+        "commits": 7,
+        "lines": 2310,
         "path": "atlas/statistics.json"
       },
       {
-        "commits": 4,
-        "lines": 10092,
+        "commits": 7,
+        "lines": 10158,
         "path": "atlas/structure.json"
       },
       {
@@ -255,13 +255,13 @@
         "path": "design/rename.md"
       },
       {
-        "commits": 9,
-        "lines": 4827,
+        "commits": 11,
+        "lines": 4867,
         "path": "package-lock.json"
       },
       {
-        "commits": 5,
-        "lines": 92,
+        "commits": 6,
+        "lines": 94,
         "path": "package.json"
       },
       {
@@ -270,8 +270,8 @@
         "path": "site/astro.config.mjs"
       },
       {
-        "commits": 2,
-        "lines": 13922,
+        "commits": 4,
+        "lines": 13934,
         "path": "site/package-lock.json"
       },
       {
@@ -745,13 +745,13 @@
         "path": "tests/assess.test.ts"
       },
       {
-        "commits": 1,
-        "lines": 74,
+        "commits": 2,
+        "lines": 83,
         "path": "tests/audit.test.ts"
       },
       {
-        "commits": 1,
-        "lines": 92,
+        "commits": 2,
+        "lines": 95,
         "path": "tests/backend-hardening.test.ts"
       },
       {
@@ -805,8 +805,8 @@
         "path": "tests/dispatch.test.ts"
       },
       {
-        "commits": 1,
-        "lines": 81,
+        "commits": 2,
+        "lines": 93,
         "path": "tests/drift.test.ts"
       },
       {
@@ -815,8 +815,8 @@
         "path": "tests/emit-handoff.test.ts"
       },
       {
-        "commits": 1,
-        "lines": 101,
+        "commits": 2,
+        "lines": 113,
         "path": "tests/errors.test.ts"
       },
       {
@@ -830,8 +830,8 @@
         "path": "tests/fleet-octokit-dispatch.test.ts"
       },
       {
-        "commits": 1,
-        "lines": 91,
+        "commits": 2,
+        "lines": 106,
         "path": "tests/github.test.ts"
       },
       {
@@ -840,8 +840,8 @@
         "path": "tests/list-forks.test.ts"
       },
       {
-        "commits": 1,
-        "lines": 101,
+        "commits": 2,
+        "lines": 107,
         "path": "tests/logger.test.ts"
       },
       {
@@ -855,8 +855,8 @@
         "path": "tests/migration-runner.test.ts"
       },
       {
-        "commits": 1,
-        "lines": 108,
+        "commits": 2,
+        "lines": 111,
         "path": "tests/network-errors.test.ts"
       },
       {
@@ -965,8 +965,8 @@
         "path": "tests/rename/variants.test.ts"
       },
       {
-        "commits": 1,
-        "lines": 59,
+        "commits": 2,
+        "lines": 65,
         "path": "tests/scan-drift.test.ts"
       },
       {
@@ -1005,9 +1005,9 @@
     "level": "low",
     "reason": "fewer than 30 qualifying commits in the window, and fewer than 25 source files reach 10 revisions"
   },
-  "generatedAt": "2026-10-01T02:13:00.338Z",
+  "generatedAt": "2026-10-14T22:51:16.857Z",
   "generatedFrom": {
-    "commit": "e8a273fef9be920c134a4c27b4e899bfe6854ec4"
+    "commit": "569ba8459fe843406f335ed59510d4faeef8efcb"
   },
   "pairs": [],
   "parameters": {
@@ -1020,16 +1020,16 @@
     "floor": "fallen",
     "floorHeld": false,
     "floorTrigger": "both",
-    "headDate": "2026-09-30T14:33:42-07:00",
+    "headDate": "2026-10-14T18:48:48-04:00",
     "inScopeFiles": 175,
     "pinnedStart": null,
     "priorFloor": "fallen",
-    "qualifyingCommits": 13,
+    "qualifyingCommits": 17,
     "qualifyingMinimum": 30,
     "revisions": 5,
     "shared": 10,
     "sharedFloorUsed": 3,
-    "since": "2026-04-03T21:33:42.000Z",
+    "since": "2026-04-17T22:48:48.000Z",
     "sourceExtensions": [
       ".js",
       ".mjs",

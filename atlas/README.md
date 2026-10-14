@@ -1,15 +1,14 @@
 # forkctl: how it works
 
-Mapped at 2026-10-01 from commit e8a273f by Atlas 1.24.0.
+Mapped at 2026-10-14 from commit 569ba84 by Atlas 1.24.0.
 
 ## What this is
 
 7 parts, mostly TypeScript (128 files), CSS (2), Astro (1) and JavaScript (1). Work enters through 5 doors; CI, forkctl and forkctl-mcp each reach 2 parts, and CI is followed because a pull request goes through it. It deploys a site to GitHub Pages. People run forkctl and forkctl-mcp.
 
-## What changed since 2026-09-30 (4e066e1)
+## What changed since 2026-10-14 (c56e1c8)
 
-- CI's pull request trigger no longer names `.github/workflows/**`, `atlas/**`, `codecov.yml`, `package-lock.json`, `package.json`, `site/astro.config.mjs`, `site/package-lock.json`, `site/package.json`, `src/**`, `tests/**`, `tsconfig.json` and `vitest.config.ts`.
-- 1 file changed content, across 1 part.
+Nothing structural changed since 2026-10-14; no file changed.
 
 ## What comes in
 

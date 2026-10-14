@@ -1,6 +1,6 @@
 {
   "name": "@mcptoolshop/forkctl",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Adoption control plane for GitHub repos. Assess, choose path, fork or template, bootstrap, sync, rename. MCP server + CLI.",
   "keywords": [
     "mcp",

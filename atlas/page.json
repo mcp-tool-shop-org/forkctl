@@ -32,21 +32,21 @@
   "changes": {
     "fileCounts": {
       "added": 0,
-      "changed": 12,
+      "changed": 0,
       "moved": 0,
-      "parts": 3,
+      "parts": 0,
       "removed": 0
     },
     "items": [
       {
         "kind": "counts",
-        "sentence": "Nothing structural changed since 2026-10-01; 12 files changed content.",
+        "sentence": "Nothing structural changed since 2026-10-14; no file changed.",
         "subjects": []
       }
     ],
     "since": {
-      "commit": "e8a273fef9be920c134a4c27b4e899bfe6854ec4",
-      "generatedAt": "2026-10-01T02:13:00.338Z"
+      "commit": "c56e1c8efe61623631810e66a71f1ce4a1f4ad68",
+      "generatedAt": "2026-10-14T22:48:45.206Z"
     },
     "unchanged": true
   },
@@ -55,7 +55,7 @@
     "Window: 180 days; a pair counts from 3 shared commits, since the window holds fewer than 30 qualifying commits."
   ],
   "changesTogetherWithTests": 0,
-  "commit": "c56e1c8efe61623631810e66a71f1ce4a1f4ad68",
+  "commit": "569ba8459fe843406f335ed59510d4faeef8efcb",
   "defaultBranch": "main",
   "derived": "7 parts, mostly TypeScript (128 files), CSS (2), Astro (1) and JavaScript (1). Work enters through 5 doors; CI, forkctl and forkctl-mcp each reach 2 parts, and CI is followed because a pull request goes through it. It deploys a site to GitHub Pages. People run forkctl and forkctl-mcp.",
   "doors": [
@@ -280,7 +280,7 @@
   ],
   "engine": "1.24.0",
   "generated": [],
-  "generatedAt": "2026-10-14T22:48:45.206Z",
+  "generatedAt": "2026-10-14T22:51:16.857Z",
   "limits": [
     "8 writes and 8 reads use paths built at run time and are not named here.",
     "26 writes and 22 reads go to a path their caller passes, not to this repository.",

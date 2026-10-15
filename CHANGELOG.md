@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [2.1.1] - 2026-10-14
+## [2.1.1] - 2026-10-15
 
 - Build fake credentials at runtime in the redaction, logging and drift tests so secret scanners do not flag test fixtures.
 - Fix: a timed-out command in the rename passes (`npm install`, `git`, `cargo check`, `make verify`) now ends its whole process tree (`taskkill /T /F` on Windows) and the call settles at the deadline plus a 2 s grace. On Windows the command runs under `cmd.exe` and `kill()` ended only that shell, so the real command kept running and writing into the working tree after the timeout was reported, while the rollback went ahead. The snapshot and post-rename passes now share one `runCommand`.

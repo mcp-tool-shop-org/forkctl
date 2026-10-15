@@ -291,7 +291,7 @@
     },
     {
       "dynamicReads": 8,
-      "dynamicSpawns": 2,
+      "dynamicSpawns": 1,
       "dynamicSpawnsInTests": 0,
       "dynamicWrites": 8,
       "entryPoints": [
@@ -584,6 +584,20 @@
               "name": "buildOctokit"
             }
           ]
+        },
+        {
+          "exports": [
+            "killTree"
+          ],
+          "failurePaths": [
+            {
+              "in": "killChild",
+              "kind": "catch",
+              "line": 33
+            }
+          ],
+          "hash": "d1ca2c11ac284994168dd09b5ac8115549ddb18be79207bb6cd1aa3fc083a731",
+          "path": "src/lib/kill-tree.ts"
         },
         {
           "exports": [
@@ -963,50 +977,57 @@
               "line": 57
             },
             {
-              "in": "runCommand",
-              "kind": "catch",
-              "line": 75
-            },
-            {
               "in": "recur",
               "kind": "catch",
-              "line": 104
+              "line": 86
             },
             {
               "in": "performMove",
               "kind": "catch",
-              "line": 165
+              "line": 147
             },
             {
               "in": "performMove",
               "kind": "catch",
-              "line": 182
+              "line": 164
             },
             {
               "in": "runPostPass",
               "kind": "catch",
-              "line": 241
+              "line": 223
             },
             {
               "in": "detectAndRunVerify",
               "kind": "catch",
-              "line": 291
+              "line": 273
             }
           ],
-          "hash": "703f61683af509671d8177d3b6983f3929e520fcfc385496835ba18ee67081f3",
+          "hash": "edb2e98abb1d1587554e06d0a51f49774c890347cdf51216bde9a67c31a0ef65",
           "importOrder": [
             "src/schemas/rename.ts",
             "src/lib/rename/variants.ts",
             "src/lib/rename/walk.ts",
-            "src/lib/rename/exclusions.ts"
+            "src/lib/rename/exclusions.ts",
+            "src/lib/rename/run-command.ts"
           ],
           "importsFiles": [
             "src/lib/rename/exclusions.ts",
+            "src/lib/rename/run-command.ts",
             "src/lib/rename/variants.ts",
             "src/lib/rename/walk.ts",
             "src/schemas/rename.ts"
           ],
           "path": "src/lib/rename/post.ts"
+        },
+        {
+          "exports": [
+            "runCommand"
+          ],
+          "hash": "dcc1e963b4ddbe7761f904f86d46e07be8eaa71b87865bdb000e9e5b6d3a167d",
+          "importsFiles": [
+            "src/lib/kill-tree.ts"
+          ],
+          "path": "src/lib/rename/run-command.ts"
         },
         {
           "exports": [
@@ -1016,59 +1037,55 @@
           ],
           "failurePaths": [
             {
-              "in": "runCommand",
-              "kind": "catch",
-              "line": 38
-            },
-            {
               "in": "exists",
               "kind": "catch",
-              "line": 52
+              "line": 31
             },
             {
               "in": "takeSnapshot",
               "kind": "throw",
-              "line": 73
+              "line": 52
             },
             {
               "in": "recur",
               "kind": "catch",
-              "line": 120
+              "line": 99
             },
             {
               "in": "rollbackSnapshot",
               "kind": "throw",
-              "line": 161
+              "line": 140
             },
             {
               "in": "rollbackSnapshot",
               "kind": "throw",
-              "line": 167
+              "line": 146
             },
             {
               "in": "rollbackSnapshot",
               "kind": "throw",
-              "line": 177
+              "line": 156
             },
             {
               "in": "rollbackSnapshot",
               "kind": "throw",
-              "line": 201
+              "line": 180
             },
             {
               "in": "gcSnapshots",
               "kind": "catch",
-              "line": 234
+              "line": 213
             },
             {
               "in": "gcSnapshots",
               "kind": "catch",
-              "line": 242
+              "line": 221
             }
           ],
-          "hash": "e1bd0d1634e25c17ebf0db345eaa4319dbee9d9e04cf6acfd18f9e7fbc8f2455",
+          "hash": "1cf5f9b1ceec5debf126519b391b4c71e1cb59fc3f4dbbe40132414f5ea9f9b1",
           "importsFiles": [
-            "src/lib/errors.ts"
+            "src/lib/errors.ts",
+            "src/lib/rename/run-command.ts"
           ],
           "path": "src/lib/rename/snapshot.ts"
         },
@@ -2326,7 +2343,7 @@
       "testRunners": [
         "vitest"
       ],
-      "testedBy": 51,
+      "testedBy": 52,
       "unresolvedSites": 0
     },
     {
@@ -3120,6 +3137,19 @@
           "testFramework": "vitest"
         },
         {
+          "hash": "8843e824b027c6563b21dd0188d36053f1f8e9cdf2a1132db696fb2ef72b6a58",
+          "importOrder": [
+            "src/lib/rename/run-command.ts",
+            "src/lib/kill-tree.ts"
+          ],
+          "importsFiles": [
+            "src/lib/kill-tree.ts",
+            "src/lib/rename/run-command.ts"
+          ],
+          "path": "tests/run-command.test.ts",
+          "testFramework": "vitest"
+        },
+        {
           "hash": "bd98b16d96d7f3592cad249d2e0ad2f506b44eb6269c421b27110dd5e43263a7",
           "importOrder": [
             "src/tools/scan-drift.ts",
@@ -3414,12 +3444,12 @@
         {
           "boundary": "src",
           "depth": 0,
-          "files": 65
+          "files": 67
         },
         {
           "boundary": "tests",
           "depth": 0,
-          "files": 60
+          "files": 61
         }
       ],
       "readers": [],
@@ -3691,6 +3721,13 @@
         {
           "job": "verify",
           "matched": true,
+          "path": "tests/run-command.test.ts",
+          "runKind": "executes",
+          "via": "vitest vitest.config.ts"
+        },
+        {
+          "job": "verify",
+          "matched": true,
           "path": "tests/scan-drift.test.ts",
           "runKind": "executes",
           "via": "vitest vitest.config.ts"
@@ -3724,7 +3761,7 @@
           "via": "vitest vitest.config.ts"
         }
       ],
-      "runsCount": 41,
+      "runsCount": 42,
       "secrets": [],
       "sends": {
         "deploysPages": false,
@@ -3741,7 +3778,7 @@
         {
           "config": "vitest.config.ts",
           "coverage": true,
-          "files": 50,
+          "files": 51,
           "job": "verify",
           "junit": true,
           "runner": "vitest",
@@ -3993,24 +4030,12 @@
       "mentions": [],
       "name": "forkctl",
       "permissions": [],
-      "programs": [
-        "git"
-      ],
       "pushes": false,
       "reach": [
         {
           "boundary": "src",
           "depth": 0,
-          "files": 65
-        },
-        {
-          "boundary": "tests",
-          "depth": 4,
-          "enters": {
-            "file": "tests/assess.test.ts",
-            "from": "src/lib/rename/post.ts"
-          },
-          "files": 60
+          "files": 67
         }
       ],
       "readers": [],
@@ -4048,24 +4073,12 @@
       "mentions": [],
       "name": "forkctl-mcp",
       "permissions": [],
-      "programs": [
-        "git"
-      ],
       "pushes": false,
       "reach": [
         {
           "boundary": "src",
           "depth": 0,
-          "files": 65
-        },
-        {
-          "boundary": "tests",
-          "depth": 4,
-          "enters": {
-            "file": "tests/assess.test.ts",
-            "from": "src/lib/rename/post.ts"
-          },
-          "files": 60
+          "files": 66
         }
       ],
       "readers": [],
@@ -4096,11 +4109,6 @@
   ],
   "edges": [
     {
-      "from": "src",
-      "kind": "spawns",
-      "to": "tests"
-    },
-    {
       "from": "tests",
       "fromTests": true,
       "kind": "file",
@@ -4109,15 +4117,237 @@
   ],
   "engine": "1.24.0",
   "generatedFrom": {
-    "commit": "569ba8459fe843406f335ed59510d4faeef8efcb",
-    "tracked": 170
+    "commit": "f1142aa855a3b87121e4e3f72c65837fa5dc7481",
+    "tracked": 173
   },
   "landings": [
     {
       "readers": [
         {
+          "by": "tests/_helpers/rename-fixtures.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        },
+        {
+          "by": "tests/assess.test.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        },
+        {
+          "by": "tests/drift.test.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        },
+        {
+          "by": "tests/make-forkable.test.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        },
+        {
+          "by": "tests/rename/textual.test.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        },
+        {
+          "by": "tests/snapshot.test.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        }
+      ],
+      "target": ".env.example",
+      "writers": []
+    },
+    {
+      "readers": [
+        {
+          "by": "tests/_helpers/rename-fixtures.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        },
+        {
+          "by": "tests/rename/identity.test.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        }
+      ],
+      "target": ".github/workflows/ci.yml",
+      "writers": []
+    },
+    {
+      "readers": [
+        {
+          "by": "tests/_helpers/rename-fixtures.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        },
+        {
+          "by": "tests/rename/textual.test.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        }
+      ],
+      "target": "CHANGELOG.md",
+      "writers": []
+    },
+    {
+      "readers": [
+        {
+          "by": "tests/_helpers/rename-fixtures.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        },
+        {
+          "by": "tests/rename/identity.test.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        }
+      ],
+      "target": "LICENSE",
+      "writers": []
+    },
+    {
+      "readers": [
+        {
+          "by": "tests/_helpers/rename-fixtures.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        },
+        {
+          "by": "tests/_helpers/sync-octokit.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        },
+        {
+          "by": "tests/drift.test.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        },
+        {
+          "by": "tests/emit-handoff.test.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        },
+        {
+          "by": "tests/rename/identity.test.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        },
+        {
+          "by": "tests/rename/tools.test.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        },
+        {
+          "by": "tests/scan-drift.test.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        }
+      ],
+      "target": "README.md",
+      "writers": []
+    },
+    {
+      "readers": [
+        {
+          "by": "tests/assess.test.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        },
+        {
+          "by": "tests/make-forkable.test.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        },
+        {
+          "by": "tests/snapshot.test.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        }
+      ],
+      "target": "SECURITY.md",
+      "writers": []
+    },
+    {
+      "readers": [
+        {
+          "by": "tests/_helpers/rename-fixtures.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        },
+        {
+          "by": "tests/rename/identity.test.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        },
+        {
+          "by": "tests/rename/post.test.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        }
+      ],
+      "target": "package-lock.json",
+      "writers": []
+    },
+    {
+      "readers": [
+        {
           "by": ".github/workflows/ci.yml",
           "confidence": "config"
+        },
+        {
+          "by": "tests/_helpers/rename-fixtures.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        },
+        {
+          "by": "tests/rename/identity.test.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        },
+        {
+          "by": "tests/rename/post.test.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        },
+        {
+          "by": "tests/rename/tools.test.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        },
+        {
+          "by": "tests/scan-drift.test.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
         }
       ],
       "target": "package.json",
@@ -4148,6 +4378,42 @@
     {
       "readers": [
         {
+          "by": "tests/_helpers/rename-fixtures.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        },
+        {
+          "by": "tests/rename/textual.test.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        }
+      ],
+      "target": "site/src/pages/index.astro",
+      "writers": []
+    },
+    {
+      "readers": [
+        {
+          "by": "tests/_helpers/rename-fixtures.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        },
+        {
+          "by": "tests/rename/schemas.test.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        }
+      ],
+      "target": "src/index.ts",
+      "writers": []
+    },
+    {
+      "readers": [
+        {
           "by": ".github/workflows/ci.yml",
           "confidence": "config"
         }
@@ -4159,6 +4425,6 @@
   "overlaps": [],
   "submodules": [],
   "symlinks": [],
-  "testFiles": 60,
+  "testFiles": 61,
   "unassigned": []
 }

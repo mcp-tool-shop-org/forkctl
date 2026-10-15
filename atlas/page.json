@@ -8,17 +8,6 @@
   ],
   "breaks": [
     {
-      "doors": 3,
-      "importedBy": [],
-      "importedByTests": [],
-      "kind": "part",
-      "name": "tests",
-      "partLabel": "tests",
-      "spawnedBy": [
-        "src"
-      ]
-    },
-    {
       "doors": 4,
       "importedBy": [],
       "importedByTests": [
@@ -31,33 +20,77 @@
   ],
   "changes": {
     "fileCounts": {
-      "added": 0,
-      "changed": 0,
+      "added": 3,
+      "changed": 2,
       "moved": 0,
-      "parts": 0,
+      "parts": 2,
       "removed": 0
     },
     "items": [
       {
+        "kind": "door",
+        "sentence": "CI now also runs tests/run-command.test.ts.",
+        "subjects": [
+          ".github/workflows/ci.yml",
+          "tests/run-command.test.ts"
+        ]
+      },
+      {
+        "kind": "landing",
+        "sentence": ".env.example is now read by tests/_helpers/rename-fixtures.ts, tests/assess.test.ts, tests/drift.test.ts, tests/make-forkable.test.ts, tests/rename/textual.test.ts and tests/snapshot.test.ts.",
+        "subjects": [
+          ".env.example",
+          "tests/_helpers/rename-fixtures.ts",
+          "tests/assess.test.ts",
+          "tests/drift.test.ts",
+          "tests/make-forkable.test.ts",
+          "tests/rename/textual.test.ts",
+          "tests/snapshot.test.ts"
+        ]
+      },
+      {
+        "kind": "landing",
+        "sentence": ".github/workflows/ci.yml is now read by tests/_helpers/rename-fixtures.ts and tests/rename/identity.test.ts.",
+        "subjects": [
+          ".github/workflows/ci.yml",
+          "tests/_helpers/rename-fixtures.ts",
+          "tests/rename/identity.test.ts"
+        ]
+      },
+      {
+        "kind": "landing",
+        "sentence": "CHANGELOG.md is now read by tests/_helpers/rename-fixtures.ts and tests/rename/textual.test.ts.",
+        "subjects": [
+          "CHANGELOG.md",
+          "tests/_helpers/rename-fixtures.ts",
+          "tests/rename/textual.test.ts"
+        ]
+      },
+      {
+        "kind": "landing",
+        "sentence": "And 7 more new writers and readers of places.",
+        "subjects": []
+      },
+      {
         "kind": "counts",
-        "sentence": "Nothing structural changed since 2026-10-14; no file changed.",
+        "sentence": "3 files added and 2 changed content, across 2 parts.",
         "subjects": []
       }
     ],
     "since": {
-      "commit": "c56e1c8efe61623631810e66a71f1ce4a1f4ad68",
-      "generatedAt": "2026-10-14T22:48:45.206Z"
+      "commit": "569ba8459fe843406f335ed59510d4faeef8efcb",
+      "generatedAt": "2026-10-14T22:51:16.857Z"
     },
-    "unchanged": true
+    "unchanged": false
   },
   "changesTogether": [],
   "changesTogetherNote": [
     "Window: 180 days; a pair counts from 3 shared commits, since the window holds fewer than 30 qualifying commits."
   ],
   "changesTogetherWithTests": 0,
-  "commit": "569ba8459fe843406f335ed59510d4faeef8efcb",
+  "commit": "f1142aa855a3b87121e4e3f72c65837fa5dc7481",
   "defaultBranch": "main",
-  "derived": "7 parts, mostly TypeScript (128 files), CSS (2), Astro (1) and JavaScript (1). Work enters through 5 doors; CI, forkctl and forkctl-mcp each reach 2 parts, and CI is followed because a pull request goes through it. It deploys a site to GitHub Pages. People run forkctl and forkctl-mcp.",
+  "derived": "7 parts, mostly TypeScript (131 files), CSS (2), Astro (1) and JavaScript (1). Work enters through 5 doors; the busiest is CI, which reaches 2 parts. It deploys a site to GitHub Pages. People run forkctl and forkctl-mcp.",
   "doors": [
     {
       "builds": [
@@ -75,12 +108,12 @@
         {
           "boundary": "src",
           "depth": 0,
-          "files": 65
+          "files": 67
         },
         {
           "boundary": "tests",
           "depth": 0,
-          "files": 60
+          "files": 61
         }
       ],
       "runs": [
@@ -119,14 +152,15 @@
         "tests/receipt.test.ts",
         "tests/registry.test.ts",
         "tests/rename/",
+        "tests/run-command.test.ts",
         "tests/scan-drift.test.ts",
         "tests/schemas.test.ts",
         "tests/snapshot.test.ts",
         "tests/state.test.ts",
         "tests/sync.test.ts"
       ],
-      "runsCount": 40,
-      "runsMore": 47,
+      "runsCount": 41,
+      "runsMore": 48,
       "sends": [
         "uploads coverage to Codecov"
       ],
@@ -173,24 +207,43 @@
       "checksCount": 0,
       "checksMore": 0,
       "file": "package.json",
-      "id": "package.json#forkctl",
-      "kind": "command",
+      "id": "package.json#@mcptoolshop/forkctl",
+      "kind": "package",
       "landings": [],
-      "name": "forkctl",
-      "programs": [
-        "git"
-      ],
+      "name": "@mcptoolshop/forkctl",
       "pushes": false,
       "reach": [
         {
           "boundary": "src",
           "depth": 0,
-          "files": 65
-        },
+          "files": 1
+        }
+      ],
+      "runs": [
+        "src/index.ts"
+      ],
+      "runsCount": 1,
+      "runsMore": 0,
+      "sends": [],
+      "stages": [],
+      "triggers": [],
+      "unpublished": true
+    },
+    {
+      "checks": [],
+      "checksCount": 0,
+      "checksMore": 0,
+      "file": "package.json",
+      "id": "package.json#forkctl",
+      "kind": "command",
+      "landings": [],
+      "name": "forkctl",
+      "pushes": false,
+      "reach": [
         {
-          "boundary": "tests",
-          "depth": 4,
-          "files": 60
+          "boundary": "src",
+          "depth": 0,
+          "files": 67
         }
       ],
       "runs": [
@@ -213,20 +266,12 @@
       "kind": "command",
       "landings": [],
       "name": "forkctl-mcp",
-      "programs": [
-        "git"
-      ],
       "pushes": false,
       "reach": [
         {
           "boundary": "src",
           "depth": 0,
-          "files": 65
-        },
-        {
-          "boundary": "tests",
-          "depth": 4,
-          "files": 60
+          "files": 66
         }
       ],
       "runs": [
@@ -239,53 +284,20 @@
       ],
       "stages": [],
       "triggers": []
-    },
-    {
-      "checks": [],
-      "checksCount": 0,
-      "checksMore": 0,
-      "file": "package.json",
-      "id": "package.json#@mcptoolshop/forkctl",
-      "kind": "package",
-      "landings": [],
-      "name": "@mcptoolshop/forkctl",
-      "pushes": false,
-      "reach": [
-        {
-          "boundary": "src",
-          "depth": 0,
-          "files": 1
-        }
-      ],
-      "runs": [
-        "src/index.ts"
-      ],
-      "runsCount": 1,
-      "runsMore": 0,
-      "sends": [],
-      "stages": [],
-      "triggers": [],
-      "unpublished": true
     }
   ],
   "duplicates": [],
   "duplicatesLead": null,
   "duplicatesNote": [],
-  "edges": [
-    {
-      "from": "tests",
-      "fromTests": true,
-      "to": "src"
-    }
-  ],
+  "edges": [],
   "engine": "1.24.0",
   "generated": [],
-  "generatedAt": "2026-10-14T22:51:16.857Z",
+  "generatedAt": "2026-10-15T20:05:01.691Z",
   "limits": [
     "8 writes and 8 reads use paths built at run time and are not named here.",
     "26 writes and 22 reads go to a path their caller passes, not to this repository.",
     "14 reads go to the directory the command is run in (.env.example, .github/, LICENSE and 4 more places), not to this repository.",
-    "2 commands are built at run time and not followed.",
+    "1 command is built at run time and not followed.",
     "Statistics confidence is low: fewer than 30 qualifying commits in the window, and fewer than 25 source files reach 10 revisions."
   ],
   "mainDoor": ".github/workflows/ci.yml",
@@ -312,9 +324,9 @@
   ],
   "summary": null,
   "summaryFrom": null,
-  "testFiles": 60,
+  "testFiles": 61,
   "testedBy": {
-    "src": 51
+    "src": 52
   },
   "unnamedWrites": 8,
   "unread": [],

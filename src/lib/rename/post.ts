@@ -11,11 +11,11 @@
 
 import { promises as fs } from "node:fs";
 import * as path from "node:path";
-import { spawn } from "node:child_process";
 import type { RenameChange, RenameWarning } from "../../schemas/rename.js";
 import type { VariantSet } from "./variants.js";
 import type { WalkedFile } from "./walk.js";
 import { isAssetNeedingRegen } from "./exclusions.js";
+import { runCommand as run } from "./run-command.js";
 
 export interface PostPassOptions {
   repoRoot: string;
@@ -59,32 +59,14 @@ async function fileExists(abs: string): Promise<boolean> {
   }
 }
 
-function runCommand(
+async function runCommand(
   cwd: string,
   cmd: string,
   args: string[],
   timeoutMs = 120_000,
 ): Promise<{ ok: boolean; output: string }> {
-  return new Promise((resolve) => {
-    const proc = spawn(cmd, args, { cwd, shell: process.platform === "win32" });
-    let stdout = "";
-    let stderr = "";
-    proc.stdout?.on("data", (d) => { stdout += d.toString(); });
-    proc.stderr?.on("data", (d) => { stderr += d.toString(); });
-    const timer = setTimeout(() => {
-      try { proc.kill("SIGKILL"); } catch { /* ignore */ }
-    }, timeoutMs);
-    proc.on("error", () => {
-      clearTimeout(timer);
-      resolve({ ok: false, output: stderr || "command failed to start" });
-    });
-    proc.on("exit", (code) => {
-      clearTimeout(timer);
-      const ok = code === 0;
-      const output = (stdout + "\n" + stderr).trim();
-      resolve({ ok, output });
-    });
-  });
+  const r = await run(cwd, cmd, args, timeoutMs);
+  return { ok: r.ok, output: (r.stdout + "\n" + r.stderr).trim() };
 }
 
 /**

@@ -12,8 +12,8 @@
 
 import { promises as fs } from "node:fs";
 import * as path from "node:path";
-import { spawn } from "node:child_process";
 import { ForkctlError } from "../errors.js";
+import { runCommand } from "./run-command.js";
 
 export interface SnapshotResult {
   id: string;
@@ -25,27 +25,6 @@ export interface SnapshotResult {
   stashRef?: string;
   /** Present for tar mode — tarball path. */
   tarball?: string;
-}
-
-function runCommand(cwd: string, cmd: string, args: string[], timeoutMs = 120_000): Promise<{ ok: boolean; stdout: string; stderr: string }> {
-  return new Promise((resolve) => {
-    const proc = spawn(cmd, args, { cwd, shell: process.platform === "win32" });
-    let stdout = "";
-    let stderr = "";
-    proc.stdout?.on("data", (d) => { stdout += d.toString(); });
-    proc.stderr?.on("data", (d) => { stderr += d.toString(); });
-    const timer = setTimeout(() => {
-      try { proc.kill("SIGKILL"); } catch { /* ignore */ }
-    }, timeoutMs);
-    proc.on("error", () => {
-      clearTimeout(timer);
-      resolve({ ok: false, stdout, stderr: stderr || "command failed to start" });
-    });
-    proc.on("exit", (code) => {
-      clearTimeout(timer);
-      resolve({ ok: code === 0, stdout, stderr });
-    });
-  });
 }
 
 async function exists(p: string): Promise<boolean> {

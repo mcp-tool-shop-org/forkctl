@@ -15,6 +15,10 @@
         {
           "hash": "6394820ca8a31e253077bf03affc5151a3361d9d75d408080c90ba406262ea45",
           "path": ".github/workflows/pages.yml"
+        },
+        {
+          "hash": "35f45cf8a9fb01f29c78a6b4e0c276e192be00476b7a8c46bbe361a52132d4a4",
+          "path": ".github/workflows/release.yml"
         }
       ],
       "globs": [
@@ -98,7 +102,7 @@
           "path": ".gitignore"
         },
         {
-          "hash": "1e4bfab77753943ab8847d6eee1a3665e687a2cb4d4be123a3193fb7c1f26f38",
+          "hash": "fc88da5c5bd38cebefcef514afc993c463bdd6abcd4c9766448bd8ce2ff08673",
           "path": "CHANGELOG.md"
         },
         {
@@ -126,7 +130,7 @@
           "path": "README.ja.md"
         },
         {
-          "hash": "9483524bff28be892059f5929a29df8c05d40dfc7756c4ea7016bcffb1f60b68",
+          "hash": "744e90a18f27cceb1b9e2fcb36f99d51347322a528763ece35cee030e1e1ca00",
           "path": "README.md"
         },
         {
@@ -150,11 +154,11 @@
           "path": "codecov.yml"
         },
         {
-          "hash": "2f5222205bdd7850ca654c1814ef1291053feab91316b98ea5ca63c89aa1b419",
+          "hash": "e0756114e9b30c8687936038fba6412ed7d09a4eafd21fcf9d25f7727b6af7e8",
           "path": "package-lock.json"
         },
         {
-          "hash": "d46eb40102b3696c614943b51e5c680285100c486f58e14bdeaa9ee8e4f26ab4",
+          "hash": "6883c0b7f8e4601699c000cbee5c849b5eacc0dded3e101c1fa3eba2f0175012",
           "path": "package.json"
         },
         {
@@ -162,7 +166,7 @@
           "path": "tsconfig.json"
         },
         {
-          "hash": "2c0344341b8e7b391315390ff47c41c2325ab26ecdb0158f5fd714b5495be55c",
+          "hash": "e3abd37464085891d648b634a9a90f86c0a449012f059ef8a87b842a0bf000bd",
           "path": "vitest.config.ts"
         }
       ],
@@ -1437,7 +1441,7 @@
           "path": "src/schemas/receipts.ts"
         },
         {
-          "hash": "f1d5bc88a819cb19af6b1ad1a80ac9239d0ada7b15870bb4773a8d3d99f42086",
+          "hash": "d0af4bc586c8dc154b7d77866743b85d41ecdb340487743dfd3304defc72f7f1",
           "path": "src/schemas/rename.ts"
         },
         {
@@ -1450,13 +1454,14 @@
         {
           "entry": "main",
           "entryRule": 1,
-          "hash": "31ed8b9247fe0c2bb11c58634a3721c8656fda47956318c55cdad37c6e94962f",
+          "hash": "46162b7f84f21160e17db90af8409ef5cdc88ba517aa04334f80b4eee07faf35",
           "importsFiles": [
             "src/dispatch.ts",
             "src/index.ts",
             "src/lib/github.ts",
             "src/lib/operations.ts",
             "src/lib/state.ts",
+            "src/tools/json-schema.ts",
             "src/tools/registry.ts"
           ],
           "path": "src/server.ts",
@@ -1799,6 +1804,13 @@
             "src/tools/types.ts"
           ],
           "path": "src/tools/fleet-health.ts"
+        },
+        {
+          "exports": [
+            "toolInputJsonSchema"
+          ],
+          "hash": "bc508714b19207af2bd37cc9247646109c253ff0f94e5e4a81f76a74f7911cb4",
+          "path": "src/tools/json-schema.ts"
         },
         {
           "failurePaths": [
@@ -2258,7 +2270,7 @@
           "path": "src/tools/sync.ts"
         },
         {
-          "hash": "003dbd963a0afcccb69c64fa765c5356a40c213093f7cb60a3cb22d141759ed2",
+          "hash": "6ab3ff8b626cc5f4892a755ec783b3be26de67cf9bdbe3b643f1847ba5df11f7",
           "importOrder": [
             "src/lib/result.ts",
             "src/lib/operations.ts"
@@ -2343,7 +2355,7 @@
       "testRunners": [
         "vitest"
       ],
-      "testedBy": 52,
+      "testedBy": 53,
       "unresolvedSites": 0
     },
     {
@@ -2742,6 +2754,19 @@
             "src/lib/github.ts"
           ],
           "path": "tests/github.test.ts",
+          "testFramework": "vitest"
+        },
+        {
+          "hash": "30ca48284314f99a7d57fc9ac3a73fda4fb324ce01df1dc5fcc913a419a2e050",
+          "importOrder": [
+            "src/tools/registry.ts",
+            "src/tools/json-schema.ts"
+          ],
+          "importsFiles": [
+            "src/tools/json-schema.ts",
+            "src/tools/registry.ts"
+          ],
+          "path": "tests/json-schema.test.ts",
           "testFramework": "vitest"
         },
         {
@@ -3444,12 +3469,12 @@
         {
           "boundary": "src",
           "depth": 0,
-          "files": 67
+          "files": 68
         },
         {
           "boundary": "tests",
           "depth": 0,
-          "files": 61
+          "files": 62
         }
       ],
       "readers": [],
@@ -3602,6 +3627,13 @@
           "job": "verify",
           "matched": true,
           "path": "tests/github.test.ts",
+          "runKind": "executes",
+          "via": "vitest vitest.config.ts"
+        },
+        {
+          "job": "verify",
+          "matched": true,
+          "path": "tests/json-schema.test.ts",
           "runKind": "executes",
           "via": "vitest vitest.config.ts"
         },
@@ -3761,7 +3793,7 @@
           "via": "vitest vitest.config.ts"
         }
       ],
-      "runsCount": 42,
+      "runsCount": 43,
       "secrets": [],
       "sends": {
         "deploysPages": false,
@@ -3778,7 +3810,7 @@
         {
           "config": "vitest.config.ts",
           "coverage": true,
-          "files": 51,
+          "files": 52,
           "job": "verify",
           "junit": true,
           "runner": "vitest",
@@ -3978,6 +4010,135 @@
     },
     {
       "checksCount": 0,
+      "commands": [
+        {
+          "dir": "",
+          "job": "publish",
+          "programs": [
+            "echo",
+            "mkdir",
+            "npm",
+            "popd",
+            "pushd"
+          ],
+          "step": "Install npm >=11.5 in a sandbox for OIDC trusted-publishing auth"
+        },
+        {
+          "dir": "",
+          "job": "publish",
+          "programs": [
+            "echo",
+            "node"
+          ],
+          "step": "Verify the tag matches package.json"
+        },
+        {
+          "dir": "",
+          "job": "publish",
+          "programs": [
+            "npm"
+          ],
+          "step": "4"
+        },
+        {
+          "dir": "",
+          "job": "publish",
+          "programs": [
+            "npm"
+          ],
+          "step": "Publish to npm with provenance (OIDC trusted publisher, no token)"
+        }
+      ],
+      "elsewhere": [],
+      "file": ".github/workflows/release.yml",
+      "jobs": [
+        {
+          "basis": "declared",
+          "name": "publish",
+          "runsOn": [
+            {
+              "labels": [
+                "ubuntu-latest"
+              ],
+              "platform": {
+                "cpu": "x64",
+                "libc": "glibc",
+                "os": "linux"
+              }
+            }
+          ],
+          "setup": [
+            {
+              "ranges": [
+                {
+                  "from": "22",
+                  "range": ">=22.0.0 <23.0.0-0"
+                }
+              ],
+              "step": "1",
+              "uses": "actions/setup-node",
+              "version": "22"
+            }
+          ]
+        }
+      ],
+      "landings": [],
+      "mentions": [
+        {
+          "job": "publish",
+          "path": "package.json"
+        }
+      ],
+      "name": "Release",
+      "permissions": [
+        "contents:read",
+        "id-token:write"
+      ],
+      "pushes": false,
+      "reach": [],
+      "readers": [],
+      "runs": [],
+      "runsCount": 0,
+      "secrets": [],
+      "sends": {
+        "deploysPages": false,
+        "dispatchesTo": [],
+        "opensIssues": false,
+        "opensIssuesOnFailure": false,
+        "opensPullRequests": false,
+        "packages": [
+          {
+            "dir": "",
+            "name": "@mcptoolshop/forkctl",
+            "registry": "npm"
+          }
+        ],
+        "publishes": true,
+        "publishesTo": [
+          "npm"
+        ],
+        "releases": false
+      },
+      "stages": [],
+      "triggers": [
+        {
+          "event": "release",
+          "types": [
+            "published"
+          ]
+        },
+        {
+          "event": "workflow_dispatch"
+        }
+      ],
+      "uses": [
+        "actions/checkout",
+        "actions/setup-node"
+      ],
+      "usesWorkflowToken": false
+    },
+    {
+      "checksCount": 0,
       "commands": [],
       "elsewhere": [],
       "entry": "src/index.ts",
@@ -4016,7 +4177,6 @@
       },
       "stages": [],
       "triggers": [],
-      "unpublished": true,
       "uses": [],
       "usesWorkflowToken": false
     },
@@ -4035,7 +4195,7 @@
         {
           "boundary": "src",
           "depth": 0,
-          "files": 67
+          "files": 68
         }
       ],
       "readers": [],
@@ -4078,7 +4238,7 @@
         {
           "boundary": "src",
           "depth": 0,
-          "files": 66
+          "files": 67
         }
       ],
       "readers": [],
@@ -4117,8 +4277,8 @@
   ],
   "engine": "1.24.0",
   "generatedFrom": {
-    "commit": "f1142aa855a3b87121e4e3f72c65837fa5dc7481",
-    "tracked": 173
+    "commit": "608562fd5919cf0f11fed2e1d487b3f9ea781899",
+    "tracked": 176
   },
   "landings": [
     {
@@ -4320,6 +4480,10 @@
           "confidence": "config"
         },
         {
+          "by": ".github/workflows/release.yml",
+          "confidence": "config"
+        },
+        {
           "by": "tests/_helpers/rename-fixtures.ts",
           "call": "literal",
           "confidence": "ast",
@@ -4425,6 +4589,6 @@
   "overlaps": [],
   "submodules": [],
   "symlinks": [],
-  "testFiles": 61,
+  "testFiles": 62,
   "unassigned": []
 }

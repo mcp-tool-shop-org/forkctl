@@ -1,5 +1,5 @@
 import type { Octokit } from "@octokit/rest";
-import type { ZodType, ZodTypeDef } from "zod";
+import type { ZodType } from "zod";
 import type { ToolResult } from "../lib/result.js";
 import type { Operations } from "../lib/operations.js";
 import type { Database as DatabaseT } from "better-sqlite3";
@@ -29,6 +29,6 @@ export interface ToolDescriptor<TInput, TOutput> {
   name: string;
   description: string;
   /** Schema may apply defaults — output type is `TInput` (post-default), wire input may be wider. */
-  inputSchema: ZodType<TInput, ZodTypeDef, unknown>;
+  inputSchema: ZodType<TInput, unknown>;
   handler: (input: TInput, ctx: ToolContext) => Promise<ToolResult<TOutput>>;
 }

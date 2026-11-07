@@ -1,31 +1,30 @@
 # forkctl: how it works
 
-Mapped at 2026-10-15 from commit f1142aa by Atlas 1.24.0.
+Mapped at 2026-11-07 from commit 608562f by Atlas 1.24.0.
 
 ## What this is
 
-7 parts, mostly TypeScript (131 files), CSS (2), Astro (1) and JavaScript (1). Work enters through 5 doors; the busiest is CI, which reaches 2 parts. It deploys a site to GitHub Pages. People run forkctl and forkctl-mcp.
+7 parts, mostly TypeScript (133 files), CSS (2), Astro (1) and JavaScript (1). Work enters through 6 doors; the busiest is CI, which reaches 2 parts. It publishes to npm. It deploys a site to GitHub Pages. People run forkctl and forkctl-mcp. People import @mcptoolshop/forkctl.
 
-## What changed since 2026-10-14 (569ba84)
+## What changed since 2026-10-15 (f1142aa)
 
-- CI now also runs tests/run-command.test.ts.
-- .env.example is now read by tests/_helpers/rename-fixtures.ts, tests/assess.test.ts, tests/drift.test.ts, tests/make-forkable.test.ts, tests/rename/textual.test.ts and tests/snapshot.test.ts.
-- .github/workflows/ci.yml is now read by tests/_helpers/rename-fixtures.ts and tests/rename/identity.test.ts.
-- CHANGELOG.md is now read by tests/_helpers/rename-fixtures.ts and tests/rename/textual.test.ts.
-- And 7 more new writers and readers of places.
-- 3 files added and 2 changed content, across 2 parts.
+- CI now also runs tests/json-schema.test.ts.
+- Release (.github/workflows/release.yml) is a new door. It starts when a release is published; or by hand. It runs no file this map can see.
+- package.json is now also read by .github/workflows/release.yml.
+- 3 files added and 8 changed content, across 4 parts.
 
 ## What comes in
 
-1. **CI.** On a pull request; on a push to main touching 12 paths; or by hand. Runs tests/assess.test.ts, tests/audit.test.ts, tests/backend-hardening.test.ts and 48 more; builds src/.
+1. **CI.** On a pull request; on a push to main touching 12 paths; or by hand. Runs tests/assess.test.ts, tests/audit.test.ts, tests/backend-hardening.test.ts and 49 more; builds src/.
 2. **Deploy site to GitHub Pages.** On a push to main touching 2 paths; or by hand. Runs site/astro.config.mjs and site/src/.
-3. **@mcptoolshop/forkctl** (the package's entry, not published from here). Loads src/index.ts.
-4. **forkctl** (a command people run). Runs src/cli.ts.
-5. **forkctl-mcp** (a command people run). Runs src/server.ts.
+3. **Release.** When a release is published; or by hand. Runs no file this map can see.
+4. **@mcptoolshop/forkctl** (the package people import). Loads src/index.ts.
+5. **forkctl** (a command people run). Runs src/cli.ts.
+6. **forkctl-mcp** (a command people run). Runs src/server.ts.
 
 ## What happens through CI
 
-1. The workflow runs 51 files in tests; it builds src/ in src.
+1. The workflow runs 52 files in tests; it builds src/ in src.
 2. It uploads coverage to Codecov.
 
 ## Who reads the results
@@ -36,7 +35,9 @@ CI writes nothing this map can see.
 
 **Deploy site to GitHub Pages** runs site/astro.config.mjs and site/src/, and deploys the site.
 
-**@mcptoolshop/forkctl** (the package's entry, not published from here) loads src/index.ts.
+**Release** runs no file this map can see and publishes to npm.
+
+**@mcptoolshop/forkctl** (the package people import) loads src/index.ts.
 
 **forkctl** (a command people run) runs src/cli.ts and changes other repositories through the GitHub API.
 

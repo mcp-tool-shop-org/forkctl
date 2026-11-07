@@ -1,11 +1,11 @@
 #!/usr/bin/env node
+import { toolInputJsonSchema } from "./tools/json-schema.js";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { zodToJsonSchema } from "zod-to-json-schema";
 import { dispatch } from "./dispatch.js";
 import { buildOctokit } from "./lib/github.js";
 import { openState } from "./lib/state.js";
@@ -35,7 +35,7 @@ async function main(): Promise<void> {
     tools: TOOLS.map((t) => ({
       name: t.name,
       description: t.description,
-      inputSchema: zodToJsonSchema(t.inputSchema, { $refStrategy: "none" }) as Record<
+      inputSchema: toolInputJsonSchema(t.inputSchema) as Record<
         string,
         unknown
       >,

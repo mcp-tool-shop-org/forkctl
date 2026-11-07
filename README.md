@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="README.ja.md">日本語</a> | <a href="README.zh.md">中文</a> | <a href="README.es.md">Español</a> | <a href="README.fr.md">Français</a> | <a href="README.hi.md">हिन्दी</a> | <a href="README.it.md">Italiano</a> | <a href="README.pt-BR.md">Português (BR)</a>
+  <a href="README.md">English</a> | <a href="README.ja.md">日本語</a> | <a href="README.zh.md">中文</a> | <a href="README.es.md">Español</a> | <a href="README.fr.md">Français</a> | <a href="README.hi.md">हिन्दी</a> | <a href="README.it.md">Italiano</a> | <a href="README.pt-BR.md">Português (BR)</a>
 </p>
 
 <p align="center">
@@ -136,7 +136,7 @@ See [SECURITY.md](SECURITY.md) for the threat model and reporting policy. Key po
 
 ## Status
 
-v1.1.0 — adds Layer 7 (Rename). Built to the [shipcheck](https://github.com/mcp-tool-shop-org/shipcheck) gate.
+v2.1.1 — rename timeouts now end the whole command process tree; dependency security updates. Layer 7 (Rename) and `--brand` mode as in 2.1.0. Built to the [shipcheck](https://github.com/mcp-tool-shop-org/shipcheck) gate.
 
 See [SHIP_GATE.md](SHIP_GATE.md) for the gate scorecard.
 

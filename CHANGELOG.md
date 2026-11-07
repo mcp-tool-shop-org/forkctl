@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Security: updated the dependencies that shipped with known advisories. `devalue` 5.9.3+ (GHSA-j22f-vq7h-c4qm, GHSA-mcm9-63f2-9j32), `brace-expansion`, and, in the packages that gate the build, `hono`, `@hono/node-server`, `body-parser`, `fast-uri`, `qs`, `vite` and `vitest`. `npm audit` at the high level is clean.
 - Changed: `zod` moved from 3 to 4.6.7 to clear GHSA-mrhx-c7xc-m3w5 (memory exhaustion on oversized collections); there is no fix in the 3 line. The MCP tool input schemas are now generated with zod's own converter, so `zod-to-json-schema` is no longer a dependency. Tool names and inputs are unchanged.
+- The MCP tool list again advertises `additionalProperties: false` on every tool input, as it did before the zod 4 move: zod 4's JSON Schema output dropped it, which would have told clients that extra keys are allowed. A test now pins it for all 22 tools.
 - Build: CI now uploads coverage and test results to Codecov, runs the Atlas map check, and runs on every pull request.
 - Release: added `release.yml`, which publishes to npm with trusted publishing when a GitHub Release is published.
 - Build fake credentials at runtime in the redaction, logging and drift tests so secret scanners do not flag test fixtures.

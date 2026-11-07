@@ -5,7 +5,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { zodToJsonSchema } from "zod-to-json-schema";
+import { z } from "zod";
 import { dispatch } from "./dispatch.js";
 import { buildOctokit } from "./lib/github.js";
 import { openState } from "./lib/state.js";
@@ -35,7 +35,7 @@ async function main(): Promise<void> {
     tools: TOOLS.map((t) => ({
       name: t.name,
       description: t.description,
-      inputSchema: zodToJsonSchema(t.inputSchema, { $refStrategy: "none" }) as Record<
+      inputSchema: z.toJSONSchema(t.inputSchema, { target: "draft-7", io: "input" }) as Record<
         string,
         unknown
       >,

@@ -7,8 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [2.1.1] - 2026-10-15
+## [2.1.1] - 2026-11-07
 
+- Security: updated the dependencies that shipped with known advisories. `devalue` 5.9.3+ (GHSA-j22f-vq7h-c4qm, GHSA-mcm9-63f2-9j32), `brace-expansion`, and, in the packages that gate the build, `hono`, `@hono/node-server`, `body-parser`, `fast-uri`, `qs`, `vite` and `vitest`. `npm audit` at the high level is clean.
+- Changed: `zod` moved from 3 to 4.6.7 to clear GHSA-mrhx-c7xc-m3w5 (memory exhaustion on oversized collections); there is no fix in the 3 line. The MCP tool input schemas are now generated with zod's own converter, so `zod-to-json-schema` is no longer a dependency. Tool names and inputs are unchanged.
+- Build: CI now uploads coverage and test results to Codecov, runs the Atlas map check, and runs on every pull request.
+- Release: added `release.yml`, which publishes to npm with trusted publishing when a GitHub Release is published.
 - Build fake credentials at runtime in the redaction, logging and drift tests so secret scanners do not flag test fixtures.
 - Fix: a timed-out command in the rename passes (`npm install`, `git`, `cargo check`, `make verify`) now ends its whole process tree (`taskkill /T /F` on Windows) and the call settles at the deadline plus a 2 s grace. On Windows the command runs under `cmd.exe` and `kill()` ended only that shell, so the real command kept running and writing into the working tree after the timeout was reported, while the rollback went ahead. The snapshot and post-rename passes now share one `runCommand`.
 - Test: the coverage floor is now enforced at the measured 82% of lines (was reported only).

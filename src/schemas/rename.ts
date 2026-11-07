@@ -131,7 +131,7 @@ export const RenamePlanSchema = z.object({
   to: z.string(),
   path: z.string(),
   createdAt: z.string(),
-  variants: z.record(VariantKeySchema, VariantEntrySchema),
+  variants: z.partialRecord(VariantKeySchema, VariantEntrySchema),
   layers: z.object({
     identity: z
       .object({

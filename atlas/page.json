@@ -20,54 +20,31 @@
   ],
   "changes": {
     "fileCounts": {
-      "added": 3,
-      "changed": 8,
+      "added": 0,
+      "changed": 9,
       "moved": 0,
-      "parts": 4,
+      "parts": 2,
       "removed": 0
     },
     "items": [
       {
-        "kind": "door",
-        "sentence": "CI now also runs tests/json-schema.test.ts.",
-        "subjects": [
-          ".github/workflows/ci.yml",
-          "tests/json-schema.test.ts"
-        ]
-      },
-      {
-        "kind": "door",
-        "sentence": "Release (.github/workflows/release.yml) is a new door. It starts when a release is published; or by hand. It runs no file this map can see.",
-        "subjects": [
-          ".github/workflows/release.yml"
-        ]
-      },
-      {
-        "kind": "landing",
-        "sentence": "package.json is now also read by .github/workflows/release.yml.",
-        "subjects": [
-          "package.json",
-          ".github/workflows/release.yml"
-        ]
-      },
-      {
         "kind": "counts",
-        "sentence": "3 files added and 8 changed content, across 4 parts.",
+        "sentence": "Nothing structural changed since 2026-11-07; 9 files changed content.",
         "subjects": []
       }
     ],
     "since": {
-      "commit": "f1142aa855a3b87121e4e3f72c65837fa5dc7481",
-      "generatedAt": "2026-10-15T20:05:01.691Z"
+      "commit": "608562fd5919cf0f11fed2e1d487b3f9ea781899",
+      "generatedAt": "2026-11-07T19:18:03.912Z"
     },
-    "unchanged": false
+    "unchanged": true
   },
   "changesTogether": [],
   "changesTogetherNote": [
     "Window: 180 days; a pair counts from 3 shared commits, since the window holds fewer than 30 qualifying commits."
   ],
   "changesTogetherWithTests": 0,
-  "commit": "608562fd5919cf0f11fed2e1d487b3f9ea781899",
+  "commit": "64604215255da1edaa888aeee1bd7cc370ec74d7",
   "defaultBranch": "main",
   "derived": "7 parts, mostly TypeScript (133 files), CSS (2), Astro (1) and JavaScript (1). Work enters through 6 doors; the busiest is CI, which reaches 2 parts. It publishes to npm. It deploys a site to GitHub Pages. People run forkctl and forkctl-mcp. People import @mcptoolshop/forkctl.",
   "doors": [
@@ -291,9 +268,9 @@
   "duplicatesLead": null,
   "duplicatesNote": [],
   "edges": [],
-  "engine": "1.24.0",
+  "engine": "1.26.0",
   "generated": [],
-  "generatedAt": "2026-11-07T19:18:03.912Z",
+  "generatedAt": "2026-11-11T22:17:30.376Z",
   "limits": [
     "8 writes and 8 reads use paths built at run time and are not named here.",
     "26 writes and 22 reads go to a path their caller passes, not to this repository.",
@@ -315,6 +292,14 @@
   "readers": [],
   "repo": "mcp-tool-shop-org/forkctl",
   "sequences": [],
+  "startBeside": [
+    {
+      "files": [
+        "src/lib/audit.ts"
+      ],
+      "from": "src/dispatch.ts"
+    }
+  ],
   "startDoor": ".github/workflows/ci.yml",
   "startHere": [
     ".github/workflows/ci.yml",
@@ -329,6 +314,7 @@
   "testedBy": {
     "src": 53
   },
+  "testedCodeParts": 1,
   "unnamedWrites": 8,
   "unread": [],
   "unreadFiles": 0,

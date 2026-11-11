@@ -1,17 +1,14 @@
 # forkctl: how it works
 
-Mapped at 2026-11-07 from commit 608562f by Atlas 1.24.0.
+Mapped at 2026-11-11 from commit 6460421 by Atlas 1.26.0.
 
 ## What this is
 
 7 parts, mostly TypeScript (133 files), CSS (2), Astro (1) and JavaScript (1). Work enters through 6 doors; the busiest is CI, which reaches 2 parts. It publishes to npm. It deploys a site to GitHub Pages. People run forkctl and forkctl-mcp. People import @mcptoolshop/forkctl.
 
-## What changed since 2026-10-15 (f1142aa)
+## What changed since 2026-11-07 (608562f)
 
-- CI now also runs tests/json-schema.test.ts.
-- Release (.github/workflows/release.yml) is a new door. It starts when a release is published; or by hand. It runs no file this map can see.
-- package.json is now also read by .github/workflows/release.yml.
-- 3 files added and 8 changed content, across 4 parts.
+Nothing structural changed since 2026-11-07; 9 files changed content.
 
 ## What comes in
 
@@ -78,6 +75,8 @@ People write .github/, assets/, design/, the repository root and site/; 8 writes
 .github/workflows/ci.yml → src/cli.ts → src/dispatch.ts → src/lib/result.ts → src/lib/errors.ts
 
 Read those in order to follow one pull request end to end.
+
+Beside the path, src/dispatch.ts also calls src/lib/audit.ts.
 
 ## What this map cannot see
 
